@@ -30,7 +30,7 @@ class SignalConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_group_name,
             {
-                'type': 'chat_message',
+                'type': 'message',
                 'message': message
             }
         )
