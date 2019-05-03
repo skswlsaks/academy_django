@@ -1,6 +1,7 @@
 'use strict';
 
 var isInitiator;
+var robot = require('robotjs');
 
 window.room = prompt("Enter room name:");
 
@@ -14,7 +15,9 @@ var pm = 'Hi there!';
 const sendButton = document.getElementById('send');
 const getscreenButton = document.getElementById('get_screen');
 var localVideo = document.querySelector('#localVideo');
+var remoteVideo = document.querySelector('#remoteVideo');
 var localStream;
+var remoteStream;
 var isInitiator = false;
 var isStarted = false;
 var isChannelReady = false;
@@ -33,14 +36,30 @@ chatSocket.onmessage = function(e) {
     var message = data['message'];
     console.log('respond from onmessage:', message);
     if (message === 'Student media ready') {
+        // maybeStart();
+    } else if (message.type === 'offer') {
+        if (!isInitiator && !isStarted) {
+            receiveOffer();
+        }
+        pc.setRemoteDescription(new RTCSessionDescription(message));
+        doAnswer();
+    } else if (message.type === 'answer' && isStarted) {
+        pc.setRemoteDescription(new RTCSessionDescription(message));
         
+    } else if (message.type === 'candidate' && isStarted) {
+        var candidate = new RTCIceCandidate({
+            sdpMLineIndex: message.label,
+            candidate: message.candidate
+        });
+        pc.addIceCandidate(candidate);
+    } else if (message.type === 'bye' && isStarted) {
+        handleRemoteHangup();
     }
+    
 
 }
 
 ///////////
-
-
 
 
 function getScreenStream(callback) {
@@ -75,27 +94,31 @@ function sendToServer(msg) {
 
 // Get screen source 
 function get_local_screen() {
-    getScreenStream(function(screenStream) {
-        console.log('Adding local stream.');
-        localStream = screenStream;
-        localVideo.srcObject = screenStream;
-        sendToServer({'info': 'Student media ready'});
-    });
+    
+    isInitiator = true;
+    isStarted = false;
+    maybeStart();
 }
-
 
 function test_server() {
     sendToServer({'holy': pm});
     sendToServer({'info': pm});
 }
 
-// if (isInitiator) {
-//     maybeStart();
-// }
+getScreenStream(function(screenStream) {
+        console.log('Adding local stream.');
+        localStream = screenStream;
+        localVideo.srcObject = screenStream;
+        sendToServer({'info': 'Student media ready'});
+});
+
+if (isInitiator) {
+    maybeStart();
+}
 
 function maybeStart() {
     console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
-    if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
+    if (!isStarted && typeof localStream !== 'undefined' ) {
         console.log('>>>>>> creating peer connection');
         createPeerConnection();
         pc.addStream(localStream);
@@ -122,15 +145,26 @@ function createPeerConnection() {
     }
 }
 
+function handleRemoteStreamRemoved(event) {
+  console.log('Remote stream removed. Event: ', event);
+}
+
 function handleIceCandidate(event) {
     if (event.candidate) {
         console.log('icecandidate event: ', event);
         sendToServer({
-            type: 'new-ice-candidate',
-            message: "",
-            candidate: event.candidate
+            type: 'candidate',
+            label: event.candidate.sdpMLineIndex,
+            id: event.candidate.sdpMid,
+            candidate: event.candidate.candidate
         });
     }
+}
+
+function handleRemoteStreamAdded(event) {
+    console.log('Remote stream added.');
+    remoteStream = event.stream;
+    remoteVideo.srcObject = remoteStream;
 }
 
 function doCall() {
@@ -146,6 +180,26 @@ function setLocalAndSendMessage(sessionDescription) {
 
 function handleCreateOfferError(event) {
   console.log('createOffer() error: ', event);
+}
+
+function doAnswer() {
+    console.log('Sending answer to peer');
+    pc.createAnswer().then(
+        setLocalAndSendMessage,
+        onCreateSessionDescriptionError
+    );
+}
+
+function onCreateSessionDescriptionError(error) {
+    trace('Failed to create session description: ' + error.toString());
+}
+
+function receiveOffer() {
+    console.log('>>>>>> creating peer connection');
+    isInitiator = true;
+    createPeerConnection();
+    isStarted = true;
+    console.log('isInitiator', isInitiator);
 }
 
 sendButton.addEventListener('click', test_server);

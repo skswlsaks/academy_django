@@ -25,7 +25,7 @@ SECRET_KEY = '_d+ig#cwuqe07os!x73^@k6d111bykg%f3%=yi$jsql2ab+t39'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.1.42', '0.0.0.0', 'localhost', '127.0.0.1']
 
 
 # Application definition
