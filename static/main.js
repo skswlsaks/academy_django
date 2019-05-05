@@ -1,7 +1,9 @@
+// docker run -p 6379:6379 -d redis
+
 'use strict';
 
 var isInitiator;
-var robot = require('robotjs');
+// var robot = require('robotjs');
 
 window.room = prompt("Enter room name:");
 
@@ -14,6 +16,7 @@ var chatSocket = new WebSocket(
 var pm = 'Hi there!';
 const sendButton = document.getElementById('send');
 const getscreenButton = document.getElementById('get_screen');
+const callButton = document.getElementById('call');
 var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
 var localStream;
@@ -21,7 +24,15 @@ var remoteStream;
 var isInitiator = false;
 var isStarted = false;
 var isChannelReady = false;
-var pc;
+var pc = new RTCPeerConnection({
+                iceServers: [     // Information about ICE servers - Use your own!
+                  {
+                    urls: "stun:stun.l.google.com:19302"//,  // A TURN server
+                    //username: "webrtc",
+                    //credential: "turnserver"
+                  }
+                ]
+            });
 
 
 // Websocket handling methods
@@ -43,10 +54,10 @@ chatSocket.onmessage = function(e) {
         }
         pc.setRemoteDescription(new RTCSessionDescription(message));
         doAnswer();
-    } else if (message.type === 'answer' && isStarted) {
+    } else if (message.type === 'answer') {
         pc.setRemoteDescription(new RTCSessionDescription(message));
         
-    } else if (message.type === 'candidate' && isStarted) {
+    } else if (message.type === 'candidate') {
         var candidate = new RTCIceCandidate({
             sdpMLineIndex: message.label,
             candidate: message.candidate
@@ -97,7 +108,14 @@ function get_local_screen() {
     
     isInitiator = true;
     isStarted = false;
-    maybeStart();
+
+    getScreenStream(function(screenStream) {
+        console.log('Adding local stream.');
+        localStream = screenStream;
+        localVideo.srcObject = screenStream;
+        // sendToServer({'info': 'Student media ready'});
+    });
+    // maybeStart();
 }
 
 function test_server() {
@@ -105,16 +123,9 @@ function test_server() {
     sendToServer({'info': pm});
 }
 
-getScreenStream(function(screenStream) {
-        console.log('Adding local stream.');
-        localStream = screenStream;
-        localVideo.srcObject = screenStream;
-        sendToServer({'info': 'Student media ready'});
-});
-
-if (isInitiator) {
-    maybeStart();
-}
+// if (isInitiator) {
+//     maybeStart();
+// }
 
 function maybeStart() {
     console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
@@ -133,7 +144,7 @@ function maybeStart() {
 
 function createPeerConnection() {
     try {
-        pc = new RTCPeerConnection(null);
+        
         pc.onicecandidate = handleIceCandidate;
         pc.onaddstream = handleRemoteStreamAdded;
         pc.onremovestream = handleRemoteStreamRemoved;
@@ -204,3 +215,4 @@ function receiveOffer() {
 
 sendButton.addEventListener('click', test_server);
 getscreenButton.addEventListener('click', get_local_screen);
+callButton.addEventListener('click', maybeStart);

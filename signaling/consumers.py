@@ -31,14 +31,29 @@ class SignalConsumer(AsyncWebsocketConsumer):
             key = 'holy'
         elif ('info' in text_data_json.keys()):
             key = 'info'
+        elif ('type' in text_data_json.keys()):
+            key = 'type'
         
         message = text_data_json[key]
+        if (message == 'offer'):
+            full_context = {
+                'type': message,
+                'sdp': text_data_json['sdp']
+            }
+        elif (message == 'candidate'):
+            full_context = {
+                'type': message,
+                'label': text_data_json['label'],
+                'candidate': text_data_json['candidate']
+            } 
+        else:
+            full_context = {
+                key: message
+            }
+        print (full_context)
         await self.channel_layer.group_send(
             self.room_group_name,
-            {
-                'type': key,
-                'message': message
-            }
+            full_context 
         )
 
         # Send message to room group
