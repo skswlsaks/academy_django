@@ -6,6 +6,7 @@ var isInitiator;
 // var robot = require('robotjs');
 
 window.room = prompt("Enter room name:");
+window.user = prompt("User?");
 
 // auth -> (Teacher or Student) => (true => student) and (false => teacher)
 var auth = false;
@@ -48,28 +49,27 @@ chatSocket.onmessage = function(e) {
     console.log('respond from onmessage:', message);
     if (message === 'Student media ready') {
         // maybeStart();
-    } else if (message.type === 'offer') {
+    } else if (message.type === 'offer' && window.user === 'r') {
         if (!isInitiator && !isStarted) {
             receiveOffer();
         }
+        console.log("sdp in offer:" + message.sdp);
         pc.setRemoteDescription(new RTCSessionDescription(message));
         doAnswer();
-    } else if (message.type === 'answer') {
+    } else if (message.type === 'answer' && window.user === 's') {
         pc.setRemoteDescription(new RTCSessionDescription(message));
         
     } else if (message.type === 'candidate') {
-        var candidate = new RTCIceCandidate({
-            sdpMLineIndex: message.label,
-            candidate: message.candidate
-        });
+        console.log("Respond Candidate " + message);
+        var candidate = new RTCIceCandidate(message);
         pc.addIceCandidate(candidate);
     } else if (message.type === 'bye' && isStarted) {
         handleRemoteHangup();
+    } else {
+
     }
-    
 
 }
-
 ///////////
 
 

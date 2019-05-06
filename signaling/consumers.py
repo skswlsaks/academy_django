@@ -12,6 +12,11 @@ class SignalConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+        # if self.scope['user'].is_anonymous:
+        #     await self.close()
+        # else:
+        #     await self.accept()
+
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -25,7 +30,6 @@ class SignalConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         text_data_json = text_data_json['msg']
-        print(text_data_json)
         
         if ('holy' in text_data_json.keys()):
             key = 'holy'
@@ -34,7 +38,6 @@ class SignalConsumer(AsyncWebsocketConsumer):
         elif ('type' in text_data_json.keys()):
             key = 'type'
         
-        print(key)
         message = text_data_json[key]
         if (message == 'offer'):
             full_context = {
@@ -49,7 +52,8 @@ class SignalConsumer(AsyncWebsocketConsumer):
             } 
         else:
             full_context = {
-                key: message
+                'type': key,
+                'message': message
             }
         print (full_context)
         await self.channel_layer.group_send(
@@ -72,4 +76,23 @@ class SignalConsumer(AsyncWebsocketConsumer):
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
             'message': message
+        }))
+
+    async def type(self, event):
+        message = event['message']
+        print("hi,", message)
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+
+    async def offer(self, event):
+        print("hi, ", event)
+        # message = event['message']
+        await self.send(text_data=json.dumps({
+            'message': event
+        }))
+    async def candidate(self, event):
+        
+        await self.send(text_data=json.dumps({
+            'message': event
         }))
