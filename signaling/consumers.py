@@ -34,6 +34,7 @@ class SignalConsumer(AsyncWebsocketConsumer):
         elif ('type' in text_data_json.keys()):
             key = 'type'
         
+        print(key)
         message = text_data_json[key]
         if (message == 'offer'):
             full_context = {

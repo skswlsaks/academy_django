@@ -113,7 +113,7 @@ function get_local_screen() {
         console.log('Adding local stream.');
         localStream = screenStream;
         localVideo.srcObject = screenStream;
-        // sendToServer({'info': 'Student media ready'});
+        sendToServer({'info': 'Student media ready'});
     });
     // maybeStart();
 }
