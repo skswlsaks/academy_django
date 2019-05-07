@@ -125,9 +125,25 @@ function get_local_screen() {
         console.log('Adding local stream.');
         localStream = screenStream;
         localVideo.srcObject = screenStream;
+        add_sound_track();
         sendToServer({'info': 'Student media ready'});
     });
     // maybeStart();
+}
+
+function add_sound_track() {
+    navigator.mediaDevices.getUserMedia({audio: true}).then(
+        stream => {
+            const audioTracks = stream.getAudioTracks();
+            if (audioTracks.length > 0) {
+                console.log("Using audio device...");
+            }
+            localStream.addTrack(audioTracks[0]);
+            localVideo.srcObject = null;
+            localVideo.srcObject = localStream;
+
+        }
+    )
 }
 
 function test_server() {
@@ -144,7 +160,8 @@ function maybeStart() {
     if (!isStarted && typeof localStream !== 'undefined' ) {
         console.log('>>>>>> creating peer connection');
         createPeerConnection();
-        pc.addStream(localStream);
+        // pc.addStream(localStream);
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
         isStarted = true;
         console.log('isInitiator', isInitiator);
         if (isInitiator) {
