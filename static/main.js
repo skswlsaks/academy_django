@@ -50,21 +50,21 @@ chatSocket.onmessage = function(e) {
     if (message === 'Student media ready') {
         // maybeStart();
         // console.log('respond from onmessage:', message);
-    } else if (message.type === 'offer' ) {
+    } else if (message.type === 'offer' && window.user === 'r') {
         console.log('Offer received!')
         if (!isInitiator && !isStarted) {
             receiveOffer();
         }
         pc.setRemoteDescription(new RTCSessionDescription(message));
         doAnswer();
-    } else if (message.type === 'answer') {
+    } else if (message.type === 'answer' && window.user === 's') {
         console.log('Got Answered!')
         pc.setRemoteDescription(new RTCSessionDescription(message));
         
         // && window.user !== message.client
         // window.user === 'r'
         // window.user === 's'
-    } else if (message.type === 'candidate' ) {
+    } else if (message.type === 'candidate' && window.user === message.client) {
         console.log("Respond Candidate " + message);
         console.log(message)
         var candidate = new RTCIceCandidate(message);
@@ -78,7 +78,7 @@ chatSocket.onmessage = function(e) {
 }
 ///////////
 
-
+// Get screen Capturing 
 function getScreenStream(callback) {
     if (navigator.getDisplayMedia) {
         navigator.getDisplayMedia({
@@ -101,12 +101,18 @@ function getScreenStream(callback) {
     }
 }
 
-
+// Emit message to server socket
 function sendToServer(msg) {
+    msg = JSON.stringify({msg});
+    msg = JSON.parse(msg)['msg'];
+    if (window.user === 'r') {
+        msg.client = 's';
+    } else {
+        msg.client = 'r';
+    }
     console.log('sending...!', msg);
-    chatSocket.send(JSON.stringify({
-        msg
-    }));
+    msg = JSON.stringify({msg});
+    chatSocket.send(msg);
 }
 
 // Get screen source 
@@ -163,7 +169,7 @@ function createPeerConnection() {
 }
 
 function handleRemoteStreamRemoved(event) {
-  console.log('Remote stream removed. Event: ', event);
+    console.log('Remote stream removed. Event: ', event);
 }
 
 function handleIceCandidate(event) {
@@ -191,6 +197,7 @@ function doCall() {
 }
 
 function setLocalAndSendMessage(sessionDescription) {
+    console.log(sessionDescription);
     pc.setLocalDescription(sessionDescription);
     console.log('setLocalAndSendMessage sending message', sessionDescription);
     sendToServer(sessionDescription);
