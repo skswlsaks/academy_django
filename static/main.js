@@ -49,18 +49,24 @@ chatSocket.onmessage = function(e) {
     console.log('respond from onmessage:', message);
     if (message === 'Student media ready') {
         // maybeStart();
-    } else if (message.type === 'offer' && window.user === 'r') {
+        // console.log('respond from onmessage:', message);
+    } else if (message.type === 'offer' ) {
+        console.log('Offer received!')
         if (!isInitiator && !isStarted) {
             receiveOffer();
         }
-        console.log("sdp in offer:" + message.sdp);
         pc.setRemoteDescription(new RTCSessionDescription(message));
         doAnswer();
-    } else if (message.type === 'answer' && window.user === 's') {
+    } else if (message.type === 'answer') {
+        console.log('Got Answered!')
         pc.setRemoteDescription(new RTCSessionDescription(message));
         
-    } else if (message.type === 'candidate') {
+        // && window.user !== message.client
+        // window.user === 'r'
+        // window.user === 's'
+    } else if (message.type === 'candidate' ) {
         console.log("Respond Candidate " + message);
+        console.log(message)
         var candidate = new RTCIceCandidate(message);
         pc.addIceCandidate(candidate);
     } else if (message.type === 'bye' && isStarted) {
@@ -167,7 +173,8 @@ function handleIceCandidate(event) {
             type: 'candidate',
             label: event.candidate.sdpMLineIndex,
             id: event.candidate.sdpMid,
-            candidate: event.candidate.candidate
+            candidate: event.candidate.candidate,
+            client: window.user
         });
     }
 }
@@ -210,7 +217,6 @@ function receiveOffer() {
     isInitiator = true;
     createPeerConnection();
     isStarted = true;
-    console.log('isInitiator', isInitiator);
 }
 
 sendButton.addEventListener('click', test_server);

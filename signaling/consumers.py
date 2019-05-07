@@ -39,29 +39,18 @@ class SignalConsumer(AsyncWebsocketConsumer):
             key = 'type'
         
         message = text_data_json[key]
-        if (message == 'offer'):
-            full_context = {
-                'type': message,
-                'sdp': text_data_json['sdp']
-            }
-        elif (message == 'candidate'):
-            full_context = {
-                'type': message,
-                'label': text_data_json['label'],
-                'candidate': text_data_json['candidate']
-            } 
-        else:
-            full_context = {
-                'type': key,
-                'message': message
-            }
-        print (full_context)
+        
+        full_context = {
+            'type': key,
+            'message': message
+        }
+        print (room_group_name)
+        # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
             full_context 
         )
 
-        # Send message to room group
 
     # Receive message from room group
     async def holy(self, event):
@@ -80,7 +69,6 @@ class SignalConsumer(AsyncWebsocketConsumer):
 
     async def type(self, event):
         message = event['message']
-        print("hi,", message)
         await self.send(text_data=json.dumps({
             'message': message
         }))
