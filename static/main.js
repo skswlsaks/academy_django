@@ -18,6 +18,7 @@ var pm = 'Hi there!';
 const sendButton = document.getElementById('send');
 const getscreenButton = document.getElementById('get_screen');
 const callButton = document.getElementById('call');
+const sendDataButton = document.getElementById('sendData');
 var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
 var localStream;
@@ -34,6 +35,8 @@ var pc = new RTCPeerConnection({
                   }
                 ]
             });
+var sendChannel;
+var receiveChannel;
 
 
 // Websocket handling methods
@@ -125,25 +128,38 @@ function get_local_screen() {
         console.log('Adding local stream.');
         localStream = screenStream;
         localVideo.srcObject = screenStream;
-        add_sound_track();
         sendToServer({'info': 'Student media ready'});
     });
-    // maybeStart();
+    // add_sound_track();
+    maybeStart();
 }
 
 function add_sound_track() {
-    navigator.mediaDevices.getUserMedia({audio: true}).then(
-        stream => {
-            const audioTracks = stream.getAudioTracks();
+    console.log("sound_tracking");
+    navigator.mediaDevices.getUserMedia({video:false, audio: true}).
+        then(
+        function (stream) {
+            const audioTracks = stream.getTracks();
+            console.log("Hey there tracking ");
             if (audioTracks.length > 0) {
                 console.log("Using audio device...");
             }
             localStream.addTrack(audioTracks[0]);
             localVideo.srcObject = null;
             localVideo.srcObject = localStream;
+            // window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            // var audioContext = new AudioContext();
 
+            // // Create an AudioNode from the stream
+            // var mediaStreamSource = audioContext.createMediaStreamSource(stream);
+
+            // // Connect it to destination to hear yourself
+            // // or any other node for processing!
+            // mediaStreamSource.connect(audioContext.destination);
         }
-    )
+    ).catch(function (err) {
+        console.log(err);
+    })
 }
 
 function test_server() {
@@ -160,8 +176,8 @@ function maybeStart() {
     if (!isStarted && typeof localStream !== 'undefined' ) {
         console.log('>>>>>> creating peer connection');
         createPeerConnection();
-        // pc.addStream(localStream);
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+        pc.addStream(localStream);
+        // localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
         isStarted = true;
         console.log('isInitiator', isInitiator);
         if (isInitiator) {
@@ -172,17 +188,52 @@ function maybeStart() {
 }
 
 function createPeerConnection() {
-    try {
-        
+    try {        
+        console.log('Created RTCPeerConnection');
         pc.onicecandidate = handleIceCandidate;
         pc.onaddstream = handleRemoteStreamAdded;
         pc.onremovestream = handleRemoteStreamRemoved;
-        console.log('Created RTCPeerConnection');
+
+        // Activating data channel 
+        sendChannel = pc.createDataChannel('sendDataChannel', null);
+        trace('Created send data channel');
+        sendChannel.onopen = onSendChannelStateChange;
+        sendChannel.onclose = onSendChannelStateChange;
+        pc.ondatachannel = receiveChannelCallback;
     } catch(e) {
         console.log('Failed to create PeerConnection, exception: ' + e.message);
         alert('Cannot create RTCPeerConnection object.');
         return;
     }
+}
+
+function onSendChannelStateChange() {
+    var readyState = sendChannel.readyState;
+    trace('Send channel state is: ' + readyState);
+}
+
+function receiveChannelCallback(event) {
+    trace('Receive Channel Callback');
+    receiveChannel = event.channel;
+    receiveChannel.onmessage = onReceiveMessageCallback;
+    receiveChannel.onopen = onReceiveChannelStateChange;
+    receiveChannel.onclose = onReceiveChannelStateChange;
+}
+
+function onReceiveChannelStateChange() {
+    var readyState = receiveChannel.readyState;
+    trace('Receive channel state is: ' + readyState);
+}
+
+function onReceiveMessageCallback(event) {
+    trace('Received Message');
+    console.log('Message from Data Channel: ' + event.data);
+}
+
+function sendData() {
+    var data = 'datachannel is working!';
+    sendChannel.send(data);
+    trace('Sent Data: ' + data);
 }
 
 function handleRemoteStreamRemoved(event) {
@@ -243,6 +294,20 @@ function receiveOffer() {
     isStarted = true;
 }
 
+function trace(text) {
+    if (text[text.length - 1] === '\n') {
+        text = text.substring(0, text.length - 1);
+    }
+    if (window.performance) {
+        var now = (window.performance.now() / 1000).toFixed(3);
+        console.log(now + ': ' + text);
+    } else {
+        console.log(text);
+    }
+}
+
+
 sendButton.addEventListener('click', test_server);
 getscreenButton.addEventListener('click', get_local_screen);
 callButton.addEventListener('click', maybeStart);
+sendDataButton.addEventListener('click', sendData);
