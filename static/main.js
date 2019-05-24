@@ -5,6 +5,7 @@
 var isInitiator;
 // var robot = require('robotjs');
 
+
 window.room = prompt("Enter room name:");
 window.user = prompt("User?");
 
@@ -37,6 +38,7 @@ var pc = new RTCPeerConnection({
             });
 var sendChannel;
 var receiveChannel;
+
 
 
 // Websocket handling methods
@@ -306,6 +308,14 @@ function trace(text) {
     }
 }
 
+function readMouseMove(e) {
+    var result_x = document.getElementById('x_cor');
+    var result_y = document.getElementById('y_cor');
+    result_x.innerHTML = e.clientX;
+    result_y.innerHTML = e.clientY;
+}
+
+localVideo.onmousemove = readMouseMove;
 
 sendButton.addEventListener('click', test_server);
 getscreenButton.addEventListener('click', get_local_screen);

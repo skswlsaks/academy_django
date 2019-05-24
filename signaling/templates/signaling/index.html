@@ -14,7 +14,9 @@
   <h1>Realtime communication with WebRTC</h1>
 
   <div id="videos">
-    <video id="localVideo" autoplay playsinline></video>
+    <div id="locals">
+      <video id="localVideo" autoplay playsinline></video>
+    </div>
     <video id="remoteVideo" autoplay playsinline></video>
     <audio id="audio" autoplay></audio>
   </div>
@@ -24,6 +26,11 @@
     <button id='get_screen'>Get screen</button>
   	<button id='call'>Call</button>
     <button id='sendData'>Data Send</button>
+  </div>
+
+  <div>
+    <h2 id="x_cor"></h2>
+    <h2 id="y_cor"></h2>
   </div>
 
   <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
