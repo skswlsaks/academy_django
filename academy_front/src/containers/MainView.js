@@ -1,6 +1,8 @@
 import React from 'react';
 import Websocket from 'react-websocket';
 import '../style/MainView.css';
+import PropTypes from 'prop-types';
+
 
 class MainForm extends React.Component {
 
@@ -92,5 +94,13 @@ class MainForm extends React.Component {
 		);
 	}
 }
+
+MainForm.propTypes = {
+	getScreenAction: PropTypes.func
+};
+
+MainForm.defaultProps = {
+	getScreenAction: () => console.warn("getScreenAction not defined!")
+};
 
 export default MainForm;
