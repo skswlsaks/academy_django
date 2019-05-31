@@ -1,5 +1,6 @@
 import React from 'react';
 import Websocket from 'react-websocket';
+import '../style/MainView.css';
 
 class MainForm extends React.Component {
 
@@ -12,7 +13,7 @@ class MainForm extends React.Component {
 		// this.getScreenStream = this.getScreenStream.bind(this);
 
 		this.state = {
-			localVideo: null,
+			localVideo: {},
 			remoteVideo: null
 		};
 	}
@@ -44,26 +45,34 @@ class MainForm extends React.Component {
 	}
 
 	getScreenAction() {
-		var localStream = navigator.mediaDevices.getDisplayMedia({
-			video: true
-		});
-		this.setState({localVideo: localStream});
+		// var localStream = navigator.mediaDevices.getDisplayMedia({
+		// 	video: true
+		// });
+		// this.setState({localVideo: localStream});
 		// this.getScreenStream(function(screenStream) {
 		// 	console.log('Adding local stream.');
-		// 	// localStream = screenStream;
-		// 	this.setState({localVideo: screenStream});
+		// 	this.localVideo.srcObject = screenStream;
+		// 	this.setState({localStream: screenStream});
 		// })
+
+		const op = {
+			video: true
+		};
+		navigator.mediaDevices.getDisplayMedia(
+			op
+		).then(stream => {
+			this.setState({localVideo: stream});
+			this.localVideo.srcObject = stream;
+		});
 	}
 
 	render () {
-		const localvideo = this.state.localVideo;
 		return (
 			<div>
 			<h1>Realtime communication with WebRTC</h1>
-			<div id="videos">
-				<video id="localVideo" autoPlay playsInline ref={localvideo}>
-					<source src={localvideo} />
-				</video>
+			<div className="video-wrapper" id="videos">
+				<video id="localVideo" autoPlay playsInline ref={video => (this.localVideo = video)} />
+				
 				<video id="remoteVideo" autoPlay playsInline />
 				<audio id="audio" autoPlay />
 			</div>
@@ -75,10 +84,10 @@ class MainForm extends React.Component {
 				<button id="sendData">Data send</button>
 			</div>
 
-			<Websocket url={'ws://' + localStorage.getItem('host') +'/ws/signaling/' + localStorage.getItem('room') + '/'}
+			{/* <Websocket url={'ws://' + localStorage.getItem('host') +'/ws/signaling/' + localStorage.getItem('room') + '/'}
 				onClose={this.handleCloseConnection}
 				onMessage={this.handleData}
-				/>
+				/> */}
 			</div>
 		);
 	}
