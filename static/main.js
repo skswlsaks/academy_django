@@ -11,9 +11,10 @@ window.user = prompt("User?");
 
 // auth -> (Teacher or Student) => (true => student) and (false => teacher)
 var auth = false;
-var chatSocket = new WebSocket(
-    'ws://' + window.location.host +
-    '/ws/signaling/' + window.room + '/');
+var ppppp = 'ws://' + window.location.host + '/ws/signaling/' + window.room + '/';
+console.log('pppp: is ', ppppp);
+
+var chatSocket = new WebSocket(ppppp);
 
 var pm = 'Hi there!';
 const sendButton = document.getElementById('send');

@@ -15,6 +15,13 @@ class PeerCreation {
                     urls: 'stun:stun.l.google.com:19302'
                 }]
             }
-        })
+        });
+        return this.peer;
     }
+
+    connect = (otherId) => {
+        this.peer.signal(otherId)
+    } 
 }
+
+export default PeerCreation;

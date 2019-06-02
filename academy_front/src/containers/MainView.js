@@ -1,7 +1,7 @@
 import React from 'react';
-import Websocket from 'react-websocket';
 import '../style/MainView.css';
 import PropTypes from 'prop-types';
+import PeerCreation from '../Peers/peer';
 
 
 class MainForm extends React.Component {
@@ -9,15 +9,43 @@ class MainForm extends React.Component {
 	constructor (props) {
 		super(props);
 		
-		this.handleData = this.handleData.bind(this);
-		this.handleCloseConnection = this.handleCloseConnection.bind(this);
 		this.getScreenAction = this.getScreenAction.bind(this);
+		this.connectToRoom = this.connectToRoom.bind(this);
 		// this.getScreenStream = this.getScreenStream.bind(this);
 
 		this.state = {
 			localVideo: {},
-			remoteVideo: null
+			remoteVideo: null,
+			initiator: false,
+			peer: {},
+			chatSocket: null
 		};
+
+	}
+
+	peercreation = new PeerCreation();
+
+	componentDidMount() {
+		// var room = prompt("Enter room name:");
+		// console.log(this.state);
+		// // Connecting to chatroom
+		const newSocket = new WebSocket('ws://127.0.0.1:8000/ws/signaling/new/');
+		
+		this.setState({
+			...this.state,
+			chatSocket: newSocket
+		});
+		// chatSocket.onopen = function(e) {}
+
+		// chatSocket.onmessage = function(e) {
+		// 	var data = JSON.parse(e.data);
+		// 	var message = data['message'];
+		// 	console.log("chatSocket from onmessage: " + message);
+		// }
+
+		// chatSocket.onclose = function(e) {
+		// 	console.error('Chat socket closed unexpectedly!');
+		// }
 	}
 
 	handleData(e) {
@@ -68,6 +96,29 @@ class MainForm extends React.Component {
 		});
 	}
 
+	connectToRoom() {
+		console.log(this.state);
+		const peer = this.peercreation.init(this.state.localVideo, this.state.initiator);
+		
+		var msg = JSON.stringify({peer});
+		console.log(msg);
+		this.state.chatSocket.send(msg);
+
+		// peer.on('signal', data => {
+        //     const signal = {
+        //         room: roomId,
+        //         desc: data
+        //     }
+        //     this.state.socket.send('signal', signal)
+        // })
+        // peer.on('stream', stream => {
+        //     this.remoteVideo.srcObject = stream
+        // })
+        // peer.on('error', function (err) { 
+        //     console.log(err)
+        // })
+	}
+
 	render () {
 		return (
 			<div>
@@ -80,16 +131,11 @@ class MainForm extends React.Component {
 			</div>
 
 			<div>
-				<button id="send">Send</button>
+				<button id="send" onClick={this.connectToRoom}>Send</button>
 				<button id="get_screen" onClick={this.getScreenAction}>Get screen</button>
 				<button id="call">Call</button>
 				<button id="sendData">Data send</button>
 			</div>
-
-			{/* <Websocket url={'ws://' + localStorage.getItem('host') +'/ws/signaling/' + localStorage.getItem('room') + '/'}
-				onClose={this.handleCloseConnection}
-				onMessage={this.handleData}
-				/> */}
 			</div>
 		);
 	}
