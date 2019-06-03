@@ -11,12 +11,13 @@ class MainForm extends React.Component {
 		
 		this.getScreenAction = this.getScreenAction.bind(this);
 		this.connectToRoom = this.connectToRoom.bind(this);
-		// this.getScreenStream = this.getScreenStream.bind(this);
+	
 
 		this.state = {
 			localVideo: {},
 			remoteVideo: null,
 			initiator: false,
+			my_peer: {},
 			peer: {},
 			chatSocket: null
 		};
@@ -24,28 +25,38 @@ class MainForm extends React.Component {
 	}
 
 	peercreation = new PeerCreation();
+	my_peer = {};
 
 	componentDidMount() {
 		// var room = prompt("Enter room name:");
 		// console.log(this.state);
 		// // Connecting to chatroom
 		const newSocket = new WebSocket('ws://127.0.0.1:8000/ws/signaling/new/');
-		
+		newSocket.onopen = function(e) {}
+	
+		newSocket.onmessage = function(e) {
+			var data = JSON.parse(e.data);
+			var message = data['peers'];
+			console.log(message);
+			console.log("chatSocket from onmessage: " + String(message));
+		}
+
+		newSocket.onclose = function(e) {
+			console.error('Chat socket closed unexpectedly!');
+		}
+
+		this.getScreenAction(function(peer){
+			
+			var msg = JSON.stringify({peer});
+			console.log(msg);
+			newSocket.send(msg);
+		});
+
 		this.setState({
 			...this.state,
 			chatSocket: newSocket
-		});
-		// chatSocket.onopen = function(e) {}
-
-		// chatSocket.onmessage = function(e) {
-		// 	var data = JSON.parse(e.data);
-		// 	var message = data['message'];
-		// 	console.log("chatSocket from onmessage: " + message);
-		// }
-
-		// chatSocket.onclose = function(e) {
-		// 	console.error('Chat socket closed unexpectedly!');
-		// }
+		})
+		
 	}
 
 	handleData(e) {
@@ -58,59 +69,36 @@ class MainForm extends React.Component {
 		console.error('Chat socket closed unexpectedly! -Jeff');
 	}
 
-	getScreenStream(callback) {
-		if (navigator.getDisplayMedia) {
-			navigator.getDisplayMedia({
-				video: true
-			}).then(screenStream => {
-				callback(screenStream);
-			});
-		} else if (navigator.mediaDevices.getDisplayMedia) {
-			navigator.mediaDevices.getDisplayMedia({
-				video: true
-			}).then(screenStream => {
-				callback(screenStream);
-			});
-		}
-	}
-
-	getScreenAction() {
-		// var localStream = navigator.mediaDevices.getDisplayMedia({
-		// 	video: true
-		// });
-		// this.setState({localVideo: localStream});
-		// this.getScreenStream(function(screenStream) {
-		// 	console.log('Adding local stream.');
-		// 	this.localVideo.srcObject = screenStream;
-		// 	this.setState({localStream: screenStream});
-		// })
-
-		const op = {
+	getScreenAction(callback) {
+		navigator.mediaDevices.getDisplayMedia({
 			video: true
-		};
-		navigator.mediaDevices.getDisplayMedia(
-			op
-		).then(stream => {
-			this.setState({localVideo: stream});
+		}).then(stream => {
 			this.localVideo.srcObject = stream;
+			var cur_peer = this.peercreation.init(stream, this.state.initiator);
+			this.setState({
+				localVideo: stream,
+				my_peer: cur_peer
+			});
+			callback(cur_peer);
 		});
 	}
 
 	connectToRoom() {
-		console.log(this.state);
-		const peer = this.peercreation.init(this.state.localVideo, this.state.initiator);
+		// const peer = this.peercreation.init(this.state.localVideo, this.state.initiator);
 		
-		var msg = JSON.stringify({peer});
-		console.log(msg);
-		this.state.chatSocket.send(msg);
-
-		// peer.on('signal', data => {
+		// var msg = JSON.stringify({peer});
+		// console.log(msg);
+		// this.state.chatSocket.send(msg);
+		// var roomId = 'new';
+		// this.peer.on('signal', data => {
         //     const signal = {
         //         room: roomId,
         //         desc: data
         //     }
-        //     this.state.socket.send('signal', signal)
-        // })
+        //     this.state.chatSocket.send({signal});
+		// })
+		
+		console.log(this.state);
         // peer.on('stream', stream => {
         //     this.remoteVideo.srcObject = stream
         // })

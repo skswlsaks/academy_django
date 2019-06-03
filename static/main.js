@@ -11,6 +11,7 @@ window.user = prompt("User?");
 
 // auth -> (Teacher or Student) => (true => student) and (false => teacher)
 var auth = false;
+console.log('pppp: is ', ppppp);
 var ppppp = 'ws://' + window.location.host + '/ws/signaling/' + window.room + '/';
 console.log('pppp: is ', ppppp);
 

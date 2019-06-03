@@ -30,42 +30,19 @@ class SignalConsumer(AsyncWebsocketConsumer):
     # Receive message from WebSocket
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        text_data_json = text_data_json['msg']
+        text_data_json = text_data_json['peer']
 
-        if ('holy' in text_data_json.keys()):
-            key = 'holy'
-        elif ('info' in text_data_json.keys()):
-            key = 'info'
-        elif ('type' in text_data_json.keys()):
-            key = 'type'
-        
-        message = text_data_json[key]
-        print("message: ",  message)
-        
-        if (message == 'offer' or message == 'answer'):
-            full_context = {
-                'type': message,
-                'sdp': text_data_json['sdp'],
-                'client': text_data_json['client']
-            }
-        elif (message == 'candidate'):
-            full_context = {
-                'type': message,
-                'label': text_data_json['label'],
-                'candidate': text_data_json['candidate'],
-                'client': text_data_json['client']
-            }
-        else:
-            full_context = {
-                'type': key,
-                'message': message
-            }
-        
+        full_context = {
+            'type': 'peer',
+            'peers': text_data_json
+        }
+
+        print(full_context)
 
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
-            full_context 
+            full_context
         )
 
 
@@ -84,10 +61,10 @@ class SignalConsumer(AsyncWebsocketConsumer):
             'message': message
         }))
 
-    async def type(self, event):
-        message = event['message']
+    async def peer(self, event):
+        message = event['peers']
         await self.send(text_data=json.dumps({
-            'message': message
+            'peers': message
         }))
 
     async def offer(self, event):
