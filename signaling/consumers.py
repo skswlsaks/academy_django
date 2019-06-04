@@ -1,4 +1,6 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.auth import login
+from channels.db import database_sync_to_async
 # from channels.consumer import AsyncConsumer
 import json
 
@@ -6,6 +8,7 @@ class SignalConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'chat_%s' % self.room_name
+        self.user = self.scope['user']
 
         # Join room group
         await self.channel_layer.group_add(
@@ -29,12 +32,15 @@ class SignalConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
+        await login(self.scope, self.user)
+        await database_sync_to_async(self.scope["session"].save)()
+
         text_data_json = json.loads(text_data)
-        text_data_json = text_data_json['peer']
+        res_data = text_data_json['peer']
 
         full_context = {
             'type': 'peer',
-            'peers': text_data_json
+            'peers': res_data
         }
 
         print(full_context)

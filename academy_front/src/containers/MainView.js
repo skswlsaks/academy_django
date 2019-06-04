@@ -29,6 +29,7 @@ class MainForm extends React.Component {
 
 	componentDidMount() {
 		// var room = prompt("Enter room name:");
+		var username = prompt("Enter username please: ");
 		// console.log(this.state);
 		// // Connecting to chatroom
 		const newSocket = new WebSocket('ws://127.0.0.1:8000/ws/signaling/new/');
@@ -47,7 +48,10 @@ class MainForm extends React.Component {
 
 		this.getScreenAction(function(peer){
 			
-			var msg = JSON.stringify({peer});
+			var msg = JSON.stringify({
+				'peer': peer,
+				'username': username
+			});
 			console.log(msg);
 			newSocket.send(msg);
 		});
