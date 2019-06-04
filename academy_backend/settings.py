@@ -31,15 +31,14 @@ ALLOWED_HOSTS = ['192.168.1.42', '0.0.0.0', 'localhost', '127.0.0.1', '192.168.0
 # Application definition
 
 INSTALLED_APPS = [
-    'channels',
-    'signaling',
-    'channels_presence',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
+    'signaling',
 ]
 
 MIDDLEWARE = [
