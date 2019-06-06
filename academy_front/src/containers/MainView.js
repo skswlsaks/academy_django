@@ -2,7 +2,9 @@ import React from 'react';
 import '../style/MainView.css';
 import PropTypes from 'prop-types';
 import PeerCreation from '../Peers/peer';
-
+import UserThumbNail from '../components/UserThumbNail';
+import { update_peer } from '../actions/index';
+import { connect } from 'react-redux';
 
 class MainForm extends React.Component {
 
@@ -12,13 +14,9 @@ class MainForm extends React.Component {
 		this.getScreenAction = this.getScreenAction.bind(this);
 		this.connectToRoom = this.connectToRoom.bind(this);
 	
-
 		this.state = {
 			localVideo: {},
-			remoteVideo: null,
 			initiator: false,
-			my_peer: {},
-			peer: {},
 			chatSocket: null
 		};
 
@@ -29,7 +27,8 @@ class MainForm extends React.Component {
 
 	componentDidMount() {
 		// var room = prompt("Enter room name:");
-		var username = prompt("Enter username please: ");
+		// var username = prompt("Enter username please: ");
+		var username = "newbie";
 		// console.log(this.state);
 		// // Connecting to chatroom
 		const newSocket = new WebSocket('ws://127.0.0.1:8000/ws/signaling/new/');
@@ -38,8 +37,9 @@ class MainForm extends React.Component {
 		newSocket.onmessage = function(e) {
 			var data = JSON.parse(e.data);
 			var message = data['peers'];
+			console.log("chatSocket from onmessage: ");
 			console.log(message);
-			console.log("chatSocket from onmessage: " + String(message));
+			update_peer(message);
 		}
 
 		newSocket.onclose = function(e) {
@@ -115,6 +115,7 @@ class MainForm extends React.Component {
 		return (
 			<div>
 			<h1>Realtime communication with WebRTC</h1>
+			<UserThumbNail username="Marry"></UserThumbNail>
 			<div className="video-wrapper" id="videos">
 				<video id="localVideo" autoPlay playsInline ref={video => (this.localVideo = video)} />
 				
@@ -133,6 +134,12 @@ class MainForm extends React.Component {
 	}
 }
 
+const mapDispatchToProps = dispatch => ({
+	update_peer: (peers) =>{
+		dispatch (update_peer(peers));
+	}
+});
+
 MainForm.propTypes = {
 	getScreenAction: PropTypes.func
 };
@@ -141,4 +148,6 @@ MainForm.defaultProps = {
 	getScreenAction: () => console.warn("getScreenAction not defined!")
 };
 
-export default MainForm;
+const ConnectedMainForm = connect(undefined, mapDispatchToProps)(MainForm);
+
+export default ConnectedMainForm;

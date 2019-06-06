@@ -45,6 +45,7 @@ class SignalConsumer(AsyncWebsocketConsumer):
         new_Peer = Peer_Connection(username=self.user, 
                                    peer_connection=res_data,
                                    chat_room=self.room_name)
+        # TODO: if the new coming user exits in the room, update peer information
         await database_sync_to_async(new_Peer.save)()
 
         all_peers = await self.get_filter_users()
