@@ -18,8 +18,8 @@ class UserThumb extends React.Component {
 
     render() {
         return (
-            <div class="thumb_nail">
-                <div class="username"> {this.props.username} </div>
+            <div className="thumb_nail">
+                <div className="username"> {this.props.username} </div>
             </div>
         );
     }   

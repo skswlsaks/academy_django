@@ -1,3 +1,5 @@
+// docker run -p 6379:6379 -d redis
+
 import React from 'react';
 import '../style/MainView.css';
 import PropTypes from 'prop-types';
@@ -5,6 +7,8 @@ import PeerCreation from '../Peers/peer';
 import UserThumbNail from '../components/UserThumbNail';
 import { update_peer } from '../actions/index';
 import { connect } from 'react-redux';
+import 'webrtc-adapter';
+
 
 class MainForm extends React.Component {
 
@@ -31,7 +35,7 @@ class MainForm extends React.Component {
 		var username = "newbie";
 		// console.log(this.state);
 		// // Connecting to chatroom
-		const newSocket = new WebSocket('ws://127.0.0.1:8000/ws/signaling/new/');
+		const newSocket = new WebSocket('ws://192.168.0.3:8000/ws/signaling/new/');
 		newSocket.onopen = function(e) {}
 	
 		newSocket.onmessage = function(e) {
@@ -73,10 +77,18 @@ class MainForm extends React.Component {
 		console.error('Chat socket closed unexpectedly! -Jeff');
 	}
 
+	getSource(){
+		if (navigator.getDisplayMedia) {
+			return navigator.getDisplayMedia({video: true});
+		} else if (navigator.mediaDevices.getDisplayMedia) {
+			return navigator.mediaDevices.getDisplayMedia({video: true});
+		}
+	}
+
 	getScreenAction(callback) {
-		navigator.mediaDevices.getDisplayMedia({
-			video: true
-		}).then(stream => {
+		this.getSource().then(stream => {
+			console.log(stream);
+			this.initiator = true;
 			this.localVideo.srcObject = stream;
 			var cur_peer = this.peercreation.init(stream, this.state.initiator);
 			this.setState({
@@ -102,7 +114,7 @@ class MainForm extends React.Component {
         //     this.state.chatSocket.send({signal});
 		// })
 		
-		console.log(this.state);
+		console.log(this.props.all_peers);
         // peer.on('stream', stream => {
         //     this.remoteVideo.srcObject = stream
         // })
@@ -124,7 +136,7 @@ class MainForm extends React.Component {
 			</div>
 
 			<div>
-				<button id="send" onClick={this.connectToRoom}>Send</button>
+				<button id="send" >Send</button>
 				<button id="get_screen" onClick={this.getScreenAction}>Get screen</button>
 				<button id="call">Call</button>
 				<button id="sendData">Data send</button>
@@ -140,6 +152,13 @@ const mapDispatchToProps = dispatch => ({
 	}
 });
 
+const mapStateToProps = (props) => {
+	return {
+		all_peers: props.peers,
+		my_peer: props.my_peer
+	};
+};
+
 MainForm.propTypes = {
 	getScreenAction: PropTypes.func
 };
@@ -148,6 +167,6 @@ MainForm.defaultProps = {
 	getScreenAction: () => console.warn("getScreenAction not defined!")
 };
 
-const ConnectedMainForm = connect(undefined, mapDispatchToProps)(MainForm);
+const ConnectedMainForm = connect(mapStateToProps, mapDispatchToProps)(MainForm);
 
 export default ConnectedMainForm;
