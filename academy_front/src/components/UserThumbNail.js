@@ -1,5 +1,5 @@
 import React from 'react';
-import './UserThumbNail.css';
+import '../style/UserThumbNail.css';
 
 class UserThumb extends React.Component {
 

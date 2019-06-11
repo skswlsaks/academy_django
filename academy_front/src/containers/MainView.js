@@ -29,7 +29,7 @@ class MainForm extends React.Component {
 	peercreation = new PeerCreation();
 	my_peer = {};
 
-	componentDidMount() {
+	async componentDidMount() {
 		// var room = prompt("Enter room name:");
 		// var username = prompt("Enter username please: ");
 		var username = "newbie";
@@ -50,15 +50,17 @@ class MainForm extends React.Component {
 			console.error('Chat socket closed unexpectedly!');
 		}
 
-		this.getScreenAction(function(peer){
-			
-			var msg = JSON.stringify({
-				'peer': peer,
-				'username': username
-			});
-			console.log(msg);
-			newSocket.send(msg);
+
+		
+		var peer = await this.getScreenAction()
+		console.log("Im here")
+		var msg = JSON.stringify({
+			'peer': await peer,
+			'username': username
 		});
+		console.log(msg);
+		newSocket.send(msg);
+	
 
 		this.setState({
 			...this.state,
@@ -77,7 +79,7 @@ class MainForm extends React.Component {
 		console.error('Chat socket closed unexpectedly! -Jeff');
 	}
 
-	getSource(){
+	async getSource(){
 		if (navigator.getDisplayMedia) {
 			return navigator.getDisplayMedia({video: true});
 		} else if (navigator.mediaDevices.getDisplayMedia) {
@@ -85,18 +87,17 @@ class MainForm extends React.Component {
 		}
 	}
 
-	getScreenAction(callback) {
-		this.getSource().then(stream => {
-			console.log(stream);
-			this.initiator = true;
-			this.localVideo.srcObject = stream;
-			var cur_peer = this.peercreation.init(stream, this.state.initiator);
-			this.setState({
-				localVideo: stream,
-				my_peer: cur_peer
-			});
-			callback(cur_peer);
+	async getScreenAction() {
+		var stream = await this.getSource()
+		console.log(stream);
+		this.initiator = true;
+		this.localVideo.srcObject = await stream;
+		var cur_peer = this.peercreation.init(await stream, this.state.initiator);
+		this.setState({
+			localVideo: await stream,
+			my_peer: cur_peer
 		});
+		return cur_peer;
 	}
 
 	connectToRoom() {
