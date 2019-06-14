@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Peer_Connection
+from .models import Peer_connection, Peer_connection_Admin
 
 # Register your models here.
-admin.site.register(Peer_Connection)
+admin.site.register(Peer_connection, Peer_connection_Admin)

@@ -3,11 +3,10 @@
 import React from 'react';
 import '../style/MainView.css';
 import PropTypes from 'prop-types';
-import PeerCreation from '../Peers/peer';
-import UserThumbNail from '../components/UserThumbNail';
+import PeerCreation from '../components/peer.js';
+import UserThumbNail from '../components/UserThumbNail.js';
 import { update_peer } from '../actions/index';
 import { connect } from 'react-redux';
-import 'webrtc-adapter';
 
 
 class MainForm extends React.Component {
@@ -17,6 +16,7 @@ class MainForm extends React.Component {
 		
 		this.getScreenAction = this.getScreenAction.bind(this);
 		this.connectToRoom = this.connectToRoom.bind(this);
+		this.signalling = this.signalling.bind(this);
 	
 		this.state = {
 			localVideo: {},
@@ -32,10 +32,9 @@ class MainForm extends React.Component {
 	async componentDidMount() {
 		// var room = prompt("Enter room name:");
 		// var username = prompt("Enter username please: ");
-		var username = "newbie";
 		// console.log(this.state);
 		// // Connecting to chatroom
-		const newSocket = new WebSocket('ws://192.168.0.3:8000/ws/signaling/new/');
+		const newSocket = new WebSocket('ws://localhost:8000/ws/signaling/new/');
 		newSocket.onopen = function(e) {}
 	
 		newSocket.onmessage = function(e) {
@@ -44,29 +43,26 @@ class MainForm extends React.Component {
 			console.log("chatSocket from onmessage: ");
 			console.log(message);
 			update_peer(message);
+			console.log("From props");
 		}
 
 		newSocket.onclose = function(e) {
 			console.error('Chat socket closed unexpectedly!');
 		}
-
-
 		
 		var peer = await this.getScreenAction()
 		console.log("Im here")
 		var msg = JSON.stringify({
-			'peer': await peer,
-			'username': username
+			'peer': await peer
 		});
 		console.log(msg);
 		newSocket.send(msg);
-	
 
 		this.setState({
 			...this.state,
 			chatSocket: newSocket
 		})
-		
+		this.connectToRoom();	
 	}
 
 	handleData(e) {
@@ -97,50 +93,60 @@ class MainForm extends React.Component {
 			localVideo: await stream,
 			my_peer: cur_peer
 		});
+
 		return cur_peer;
 	}
 
 	connectToRoom() {
-		// const peer = this.peercreation.init(this.state.localVideo, this.state.initiator);
+		this.state.my_peer.on('signal', data => {
+            
+		})
 		
-		// var msg = JSON.stringify({peer});
-		// console.log(msg);
-		// this.state.chatSocket.send(msg);
-		// var roomId = 'new';
-		// this.peer.on('signal', data => {
-        //     const signal = {
-        //         room: roomId,
-        //         desc: data
-        //     }
-        //     this.state.chatSocket.send({signal});
-		// })
-		
+		console.log(this.props.peers);
+        this.state.my_peer.on('stream', stream => {
+            this.remoteVideo.srcObject = stream
+        })
+        this.state.my_peer.on('error', function (err) { 
+            console.log(err)
+        })
+	}
+
+	signalling() {
+		// for (var pee in this.props.all_peers) {
+		// 	if (pee['id'] !== this.state.my_peer['id']) {
+		// 		this.state.my_peer.connect(pee);
+		// 		break;
+		// 	}
+		// }
+
 		console.log(this.props.all_peers);
-        // peer.on('stream', stream => {
-        //     this.remoteVideo.srcObject = stream
-        // })
-        // peer.on('error', function (err) { 
-        //     console.log(err)
-        // })
+
 	}
 
 	render () {
+
+		const { all_peers } = this.props;
+		console.log(all_peers)
 		return (
 			<div>
 			<h1>Realtime communication with WebRTC</h1>
-			<UserThumbNail username="Marry"></UserThumbNail>
+			{
+				Object.keys(all_peers).map((key, index) => {
+					<UserThumbNail username={key}></UserThumbNail>
+				})
+			}
+			<UserThumbNail username={"Marry"}></UserThumbNail>
 			<div className="video-wrapper" id="videos">
 				<video id="localVideo" autoPlay playsInline ref={video => (this.localVideo = video)} />
-				
-				<video id="remoteVideo" autoPlay playsInline />
+				<video id="remoteVideo" autoPlay playsInline ref={video => (this.remoteVideo = video)}/>
 				<audio id="audio" autoPlay />
 			</div>
 
 			<div>
 				<button id="send" >Send</button>
 				<button id="get_screen" onClick={this.getScreenAction}>Get screen</button>
-				<button id="call">Call</button>
-				<button id="sendData">Data send</button>
+				<button id="call" onClick={this.signalling}>Signal</button>
+				<button id="sendData" >Data send</button>
 			</div>
 			</div>
 		);
@@ -153,10 +159,10 @@ const mapDispatchToProps = dispatch => ({
 	}
 });
 
-const mapStateToProps = (props) => {
+const mapStateToProps = (state) => {
 	return {
-		all_peers: props.peers,
-		my_peer: props.my_peer
+		all_peers: state.peers,
+		my_peer: state.my_peer
 	};
 };
 
