@@ -11,11 +11,13 @@ const peer_initial_state = {
 const peer_manager = (state=peer_initial_state, action) => {
     switch(action.type) {
         case UPDATE_PEER:
-            var temp = defaults({'peers': action.peer}, state);
-            console.log(temp);
-            return temp
+            var new_state = {
+                ...state,
+                peers: action.peer
+            }
+            return new_state;
         default:
-            return state
+            return state;
     }
 };
 

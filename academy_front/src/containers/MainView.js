@@ -5,7 +5,7 @@ import '../style/MainView.css';
 import PropTypes from 'prop-types';
 import PeerCreation from '../components/peer.js';
 import UserThumbNail from '../components/UserThumbNail.js';
-import { update_peer } from '../actions/index';
+import * as actions from '../actions';
 import { connect } from 'react-redux';
 
 
@@ -21,7 +21,8 @@ class MainForm extends React.Component {
 		this.state = {
 			localVideo: {},
 			initiator: false,
-			chatSocket: null
+			chatSocket: null,
+			all_peers: {}
 		};
 
 	}
@@ -35,6 +36,8 @@ class MainForm extends React.Component {
 		// console.log(this.state);
 		// // Connecting to chatroom
 		const newSocket = new WebSocket('ws://localhost:8000/ws/signaling/new/');
+
+		const that = this;
 		newSocket.onopen = function(e) {}
 	
 		newSocket.onmessage = function(e) {
@@ -42,8 +45,8 @@ class MainForm extends React.Component {
 			var message = data['peers'];
 			console.log("chatSocket from onmessage: ");
 			console.log(message);
-			update_peer(message);
-			console.log("From props");
+			that.props.update_peer(message);
+
 		}
 
 		newSocket.onclose = function(e) {
@@ -51,7 +54,6 @@ class MainForm extends React.Component {
 		}
 		
 		var peer = await this.getScreenAction()
-		console.log("Im here")
 		var msg = JSON.stringify({
 			'peer': await peer
 		});
@@ -64,6 +66,8 @@ class MainForm extends React.Component {
 		})
 		this.connectToRoom();	
 	}
+
+
 
 	handleData(e) {
 		var data = JSON.parse(e.data);
@@ -119,14 +123,18 @@ class MainForm extends React.Component {
 		// 	}
 		// }
 
-		console.log(this.props.all_peers);
+		var pppp = this.props.all_peers;
+		console.log("Start")
+		Object.keys(pppp).map((key, index) => {
+			console.log(key, pppp[key])
+		})
 
 	}
 
 	render () {
 
 		const { all_peers } = this.props;
-		console.log(all_peers)
+		console.log(all_peers);
 		return (
 			<div>
 			<h1>Realtime communication with WebRTC</h1>
@@ -153,13 +161,15 @@ class MainForm extends React.Component {
 	}
 }
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch) => ({
 	update_peer: (peers) =>{
-		dispatch (update_peer(peers));
+		dispatch (actions.update_peer(peers));
 	}
 });
 
 const mapStateToProps = (state) => {
+	console.log("from mapstate")
+	console.log(state);
 	return {
 		all_peers: state.peers,
 		my_peer: state.my_peer

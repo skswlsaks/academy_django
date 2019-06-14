@@ -6,10 +6,6 @@ class UserThumb extends React.Component {
     constructor(props) {
         super(props);
         this.onHandleClick = this.onHandleClick.bind(this);
-
-        this.state = {
-
-        }
     }
 
     onHandleClick() {
