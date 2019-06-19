@@ -12,7 +12,8 @@
     "react-websocket": "^2.0.1",
     "redux": "^4.0.1",
     "simple-peer": "^9.3.0",
-    "webrtc-adapter": "^7.2.4"
+    "webrtc-adapter": "^7.2.4",
+    "wrtc": "^0.4.1"
   },
   "scripts": {
     "start": "webpack-dev-server --mode development",

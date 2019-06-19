@@ -4,6 +4,7 @@ from channels.db import database_sync_to_async
 from .models import Peer_connection
 # from channels.consumer import AsyncConsumer
 import json
+import ast 
 
 
 class SignalConsumer(AsyncWebsocketConsumer):
@@ -39,7 +40,6 @@ class SignalConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def update_user(self, new_peer):
         data = Peer_connection.objects.get(username=self.user)
-        print(data)
         data.peer_id = new_peer['_id']
         data.peer_connection = new_peer
         data.chat_room = self.room_name
@@ -50,31 +50,49 @@ class SignalConsumer(AsyncWebsocketConsumer):
         await login(self.scope, self.user)
 
         text_data_json = json.loads(text_data)
-        res_data = text_data_json['peer']
-        
-        # TODO: if the new coming user exits 
-        # in the room, update peer information
+        keys = text_data_json.keys()
+        full_context = {}
 
-        # await database_sync_to_async(new_Peer.save)()
+        if 'peer' in keys:
+            res_data = text_data_json['peer']
+            try:
+                await self.update_user(res_data)
+            except:
+                new_Peer = Peer_connection(username=self.user, 
+                                    peer_id=res_data['_id'],
+                                    peer_connection=res_data,
+                                    chat_room=self.room_name)
+                await database_sync_to_async(new_Peer.save)()
+            all_peers = await self.get_filter_users()
+            send_back_peers = {}
 
-        try:
-            await self.update_user(res_data)
-        except:
-            new_Peer = Peer_connection(username=self.user, 
-                                   peer_id=res_data['_id'],
-                                   peer_connection=res_data,
-                                   chat_room=self.room_name)
-            await database_sync_to_async(new_Peer.save)()
-        all_peers = await self.get_filter_users()
-        send_back_peers = {}
-
-        for pp in all_peers:
-            send_back_peers[pp.username.username] = pp.peer_connection
-        print(send_back_peers)
-        full_context = {
-            'type': 'peer',
-            'peers': send_back_peers
-        }
+            for pp in all_peers:
+                send_back_peers[pp.username.username] = pp.peer_connection
+            full_context = {
+                'type': 'peer',
+                'peers': send_back_peers
+            }
+        elif 'call' in keys:
+            caller = text_data_json['call']
+            called = text_data_json['becalled']
+            try:
+                caller = ast.literal_eval(caller)
+            except:
+                pass
+            full_context = {
+                'type': 'call',
+                'peers': caller['_id'],
+                'called': called['_id']
+            }
+        elif 'receive' in keys:
+            print("Got receive")
+            receive = text_data_json['receive']
+            data = text_data_json['data']
+            full_context = {
+                'type': 'receive_call',
+                'receiver': receive,
+                'data': data
+            }
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -99,21 +117,23 @@ class SignalConsumer(AsyncWebsocketConsumer):
     async def peer(self, event):
         message = event['peers']
         await self.send(text_data=json.dumps({
+            'type': 'peer',
             'peers': message
         }))
 
-    async def offer(self, event):
+    async def call(self, event):
+        message = event['peers']
         await self.send(text_data=json.dumps({
-            'message': event
+            'type': 'call',
+            'peers': message,
+            'called': event['called']
         }))
-
-    async def candidate(self, event):
+    async def receive_call(self, event):
+        receiver = event['receiver']
+        data = event['data']
         await self.send(text_data=json.dumps({
-            'message': event
-        }))
-
-    async def answer(self, event):
-        await self.send(text_data=json.dumps({
-            'message': event
+            'type': 'receive',
+            'receiver': receiver,
+            'data': data
         }))
 
