@@ -20,10 +20,9 @@ class UserThumb extends React.Component {
         socket.send(msg);
     }
 
-
     render() {
         return (
-            <div className="thumb_nail" onClick={this.handleClick.bind(this, this.props.username)}>
+            <div className="thumb_nail" onClick={this.handleClick(this.props.username)}>
                 <div className="username"> {this.props.username} </div>
             </div>
         );
@@ -32,13 +31,13 @@ class UserThumb extends React.Component {
 
 const mapStateToProps = (state) => {
 	return {
-		all_peers: state.peers,
-        my_peer: state.my_peer,
-        peercreation: state.peercreation,
-        socket: state.socket
+		all_peers: state.peer_manager.peers,
+        my_peer: state.peer_manager.my_peer,
+        peercreation: state.peer_manager.peercreation,
+        socket: state.peer_manager.socket
 	};
 };
 
-const ConnectedUserThumb = connect(mapStateToProps, undefined)(UserThumb);
+const ConnectedUserThumb = connect(mapStateToProps)(UserThumb);
 
 export default ConnectedUserThumb;

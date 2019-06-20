@@ -1,0 +1,26 @@
+body {
+    font-family: sans-serif;
+}
+
+.main-view{
+    text-align: center;
+}
+  
+video {
+    width: 600px;
+    max-width: 100%;
+}
+
+.buttons button{
+    margin-left: 10px;
+}
+
+.video-wrapper{
+    height: 500px;
+    background: #252839;
+    width: 100%;
+}
+
+.thumbnail-wrapper{
+    margin-bottom: 10px;
+}

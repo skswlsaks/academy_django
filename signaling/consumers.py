@@ -1,45 +1,64 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.auth import login
+from knox.auth import TokenAuthentication
+# from channels.auth import login
 from channels.db import database_sync_to_async
 from .models import Peer_connection
+from rest_framework import HTTP_HEADER_ENCODING
 # from channels.consumer import AsyncConsumer
 import json
-import ast 
-
+import ast
 
 class SignalConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'chat_%s' % self.room_name
-        self.user = self.scope['user']
-
+        # NOTE: Group names may only contain letters, digits, hyphens, and periods. 
+        # TODO: Implement sanitizer/filtering/validation for room_name
+        
         # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
 
-        # if self.scope['user'].is_anonymous:
-        #     await self.close()
-        # else:
-        #     await self.accept()
-
         await self.accept()
 
     async def disconnect(self, close_code):
-        # Leave room group
+        # Remove user from peer_connections if exists
+        try:
+            await database_sync_to_async(Peer_connection.objects.get(user=self.user).delete())()
+        except Exception:
+            pass
+
+        all_peers = await self.get_filter_users()
+        send_back_peers = {}
+        for pp in all_peers:
+            send_back_peers[pp.user.username] = pp.peer_connection
+        full_context = {
+            'type': 'user_disconnected',
+            'username': self.user.username,
+            'peers': send_back_peers
+        }
+        # Send message to room group
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            full_context
+        )
+
+        # Remove user from room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
+
     
     @database_sync_to_async
     def get_filter_users(self):
         return Peer_connection.objects.filter(chat_room=self.room_name) 
-    
+
     @database_sync_to_async
     def update_user(self, new_peer):
-        data = Peer_connection.objects.get(username=self.user)
+        data = Peer_connection.objects.get(user=self.user)
         data.peer_id = new_peer['_id']
         data.peer_connection = new_peer
         data.chat_room = self.room_name
@@ -47,32 +66,54 @@ class SignalConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-        await login(self.scope, self.user)
-
         text_data_json = json.loads(text_data)
         keys = text_data_json.keys()
-        full_context = {}
 
-        if 'peer' in keys:
-            res_data = text_data_json['peer']
+        # Authenticate connection
+        if 'access_token' in keys and text_data_json['access_token'] is not None:
+            print('Server receive from websocket: access_token')
             try:
-                await self.update_user(res_data)
+                knoxAuth = TokenAuthentication();
+                user, auth_token = knoxAuth.authenticate_credentials(text_data_json['access_token'].encode(HTTP_HEADER_ENCODING))
+                self.user = self.scope['user'] = user
+            except Exception as e: #invalid tokens
+                print(e)
+                await self.close() #close connection
+
+            return
+        else:
+            # check user is authenticated
+            if hasattr(self, 'user') and hasattr(self.user, 'id') and not self.user.is_anonymous:
+                pass
+            else:
+                await self.close() #close connection
+                return
+
+        # Signaling WebRTC peer connection
+        full_context = {}
+        if 'peer' in keys:
+            print("Server receive from websocket: peer")
+            peer_data = text_data_json['peer']
+            try:
+                await self.update_user(peer_data)
             except:
-                new_Peer = Peer_connection(username=self.user, 
-                                    peer_id=res_data['_id'],
-                                    peer_connection=res_data,
+                new_peer = Peer_connection(user=self.user, 
+                                    peer_id=peer_data['_id'],
+                                    peer_connection=peer_data,
                                     chat_room=self.room_name)
-                await database_sync_to_async(new_Peer.save)()
+                await database_sync_to_async(new_peer.save)()
+                print("Server created new peer connection object: " + peer_data['_id'])
             all_peers = await self.get_filter_users()
             send_back_peers = {}
 
             for pp in all_peers:
-                send_back_peers[pp.username.username] = pp.peer_connection
+                send_back_peers[pp.user.username] = pp.peer_connection
             full_context = {
                 'type': 'peer',
                 'peers': send_back_peers
             }
         elif 'call' in keys:
+            print("Server receive from websocket: call")
             caller = text_data_json['call']
             called = text_data_json['becalled']
             try:
@@ -84,15 +125,16 @@ class SignalConsumer(AsyncWebsocketConsumer):
                 'peers': caller['_id'],
                 'called': called['_id']
             }
-        elif 'receive' in keys:
-            print("Got receive")
-            receive = text_data_json['receive']
+        elif 'receive_call' in keys:
+            print("Server receive from websocket: receive_call")
+            receive = text_data_json['receive_call']
             data = text_data_json['data']
             full_context = {
                 'type': 'receive_call',
                 'receiver': receive,
                 'data': data
             }
+
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -128,12 +170,21 @@ class SignalConsumer(AsyncWebsocketConsumer):
             'peers': message,
             'called': event['called']
         }))
+
     async def receive_call(self, event):
         receiver = event['receiver']
         data = event['data']
         await self.send(text_data=json.dumps({
-            'type': 'receive',
+            'type': 'receive_call',
             'receiver': receiver,
             'data': data
         }))
 
+    async def user_disconnected(self, event):
+        username = event['username']
+        peers = event['peers']
+        await self.send(text_data=json.dumps({
+            'type': 'user_disconnected',
+            'username': username,
+            'peers': peers
+        }))

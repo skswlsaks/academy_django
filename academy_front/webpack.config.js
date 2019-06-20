@@ -8,10 +8,10 @@ module.exports = {
         'react-hot-loader/patch',
         './src/index.js'
     ],
-    
     output: {
         path: path.resolve(__dirname, 'dist/js'),
-        filename: 'bundle.[hash].js'
+        filename: 'bundle.[hash].js',
+        publicPath: '/'
     },
     module: {
       rules: [
@@ -42,6 +42,7 @@ module.exports = {
     devServer: {
         host: 'localhost',
         port: '3000',
+        historyApiFallback: true,
         hot: true
     }
 };

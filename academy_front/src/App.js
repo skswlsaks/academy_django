@@ -1,21 +1,54 @@
-import React from 'react';
+import React, { Component, Fragment } from 'react';
+import ReactDOM from 'react-dom';
+import store from "./store";
+import { Provider } from 'react-redux';
+import * as serviceWorker from './serviceWorker';
+import 'bootstrap/dist/css/bootstrap.css';
 import './App.css';
-import MainForm from './containers/MainView';
 
-import { BrowserRouter as Router } from 'react-router-dom';
-import { Route, Switch } from 'react-router-dom';
+import PrivateRoute from './containers/PrivateRoute';
 
-function App() {
-    return (
-        <div className="App">
-            <Router>
-                <Switch>
-                    <Route path="/" exact component={MainForm} />
-                    {/* <Route path="/Login/" component={Login} /> */}
-                </Switch>
-            </Router>
-        </div>
-    );
+import MainView from './containers/Main';
+import LoginView from './containers/Login';
+import RegisterView from './containers/Register';
+import MyNavbar from './components/MyNavbar';
+
+import { getUser } from "./actions/auth";
+import { AUTH_ERROR } from "./actions/types";
+
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
+
+class App extends Component {
+    componentDidMount() {
+        if(localStorage.getItem("token")){
+            store.dispatch(getUser());
+        }else{
+            store.dispatch({ type: AUTH_ERROR });
+        }
+    }
+
+    render() {
+        return (
+            <Provider store={store}>
+                <BrowserRouter>
+                    <div className="App">
+                        <MyNavbar />
+                        <Switch>
+                            <PrivateRoute exact path="/" component={MainView} />
+                            <Route exact path="/login" component={LoginView} />
+                            <Route exact path="/register" component={RegisterView} />
+                        </Switch>
+                    </div>
+                </BrowserRouter>
+            </Provider>
+        );
+    }
 }
 
-export default App;
+ReactDOM.render(<App />, document.getElementById('root'));
+
+// If you want your app to work offline and load faster, you can change
+// unregister() to register() below. Note this comes with some pitfalls.
+// Learn more about service workers: https://bit.ly/CRA-PWA
+serviceWorker.unregister();
+module.hot.accept();
