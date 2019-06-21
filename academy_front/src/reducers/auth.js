@@ -1,4 +1,4 @@
-import { LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT_SUCCESS, USER_LOADING, USER_LOADED, AUTH_ERROR } from "../actions/types";
+import { REGISTER_SUCCESS, REGISTER_FAILURE, LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT_SUCCESS, USER_LOADING, USER_LOADED, AUTH_ERROR } from "../actions/types";
 
 const initialState = {
     token: localStorage.getItem("token"),
@@ -22,6 +22,7 @@ const auth = (state = initialState, action) => {
                 isLoading: false,
                 user: action.payload
             };
+        case REGISTER_SUCCESS:
         case LOGIN_SUCCESS:
             console.log('LOGGED IN!!');
             localStorage.setItem("token", action.payload.token);
@@ -31,6 +32,7 @@ const auth = (state = initialState, action) => {
                 isAuthenticated: true
             };
         case AUTH_ERROR:
+        case REGISTER_FAILURE:
         case LOGIN_FAILURE:
         case LOGOUT_SUCCESS:
             localStorage.removeItem("token");

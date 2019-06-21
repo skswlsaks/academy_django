@@ -18,8 +18,7 @@ class Migration(migrations.Migration):
             name='Peer_connection',
             fields=[
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
-                ('peer_id', models.TextField(max_length=20)),
-                ('peer_connection', models.TextField()),
+                ('peer', models.TextField(blank=True, null=True)),
                 ('chat_room', models.CharField(max_length=50)),
             ],
         ),

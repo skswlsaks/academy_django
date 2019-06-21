@@ -33,7 +33,7 @@ class SignalConsumer(AsyncWebsocketConsumer):
         all_peers = await self.get_filter_users()
         send_back_peers = {}
         for pp in all_peers:
-            send_back_peers[pp.user.username] = pp.peer_connection
+            send_back_peers[pp.user.username] = pp.peer
         full_context = {
             'type': 'user_disconnected',
             'username': self.user.username,
@@ -55,14 +55,12 @@ class SignalConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_filter_users(self):
         return Peer_connection.objects.filter(chat_room=self.room_name) 
-
+""" 
     @database_sync_to_async
-    def update_user(self, new_peer):
+    def update_peer(self, new_peer):
         data = Peer_connection.objects.get(user=self.user)
-        data.peer_id = new_peer['_id']
-        data.peer_connection = new_peer
-        data.chat_room = self.room_name
-        data.save()
+        data.peer = new_peer
+        data.save() """
 
     # Receive message from WebSocket
     async def receive(self, text_data):
@@ -76,6 +74,34 @@ class SignalConsumer(AsyncWebsocketConsumer):
                 knoxAuth = TokenAuthentication();
                 user, auth_token = knoxAuth.authenticate_credentials(text_data_json['access_token'].encode(HTTP_HEADER_ENCODING))
                 self.user = self.scope['user'] = user
+
+                #create peer_connection entry with empty peer
+                try:
+                    new_peer = Peer_connection(user=self.user, 
+                                        chat_room=self.room_name,
+                                        peer='')
+                    await database_sync_to_async(new_peer.save)()
+                    print("Server created new peer_connection object for: " + self.user.username)
+                    
+                    all_peers = await self.get_filter_users()
+                    send_back_peers = {}
+
+                    for pp in all_peers:
+                        send_back_peers[pp.user.username] = 'not-initialized'
+                    full_context = {
+                        'type': 'user_connected',
+                        'username': self.user.username,
+                        'peers': send_back_peers
+                    }
+                    # Send message to room group
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        full_context
+                    )
+                    return
+                except:
+                    print('Something went wrong while creating peer_connection')
+                    await self.close() #close connection
             except Exception as e: #invalid tokens
                 print(e)
                 await self.close() #close connection
@@ -89,50 +115,26 @@ class SignalConsumer(AsyncWebsocketConsumer):
                 await self.close() #close connection
                 return
 
-        # Signaling WebRTC peer connection
         full_context = {}
-        if 'peer' in keys:
-            print("Server receive from websocket: peer")
-            peer_data = text_data_json['peer']
-            try:
-                await self.update_user(peer_data)
-            except:
-                new_peer = Peer_connection(user=self.user, 
-                                    peer_id=peer_data['_id'],
-                                    peer_connection=peer_data,
-                                    chat_room=self.room_name)
-                await database_sync_to_async(new_peer.save)()
-                print("Server created new peer connection object: " + peer_data['_id'])
-            all_peers = await self.get_filter_users()
-            send_back_peers = {}
+        if 'init_peer' in keys:
+            print("Server receive from websocket: init_peer")
+            from_username = text_data_json['from_username']
+            to_username = text_data_json['to_username']
+           
+            full_context = {
+                'type': 'init_peer',
+                'from_username': from_username,
+                'to_username': to_username
+            }
 
-            for pp in all_peers:
-                send_back_peers[pp.user.username] = pp.peer_connection
+        elif 'offer' in keys:
+            print("Server receive from websocket: offer")
+            peer_data = text_data_json['offer']
+            to_username = text_data_json['to_username']
             full_context = {
-                'type': 'peer',
-                'peers': send_back_peers
-            }
-        elif 'call' in keys:
-            print("Server receive from websocket: call")
-            caller = text_data_json['call']
-            called = text_data_json['becalled']
-            try:
-                caller = ast.literal_eval(caller)
-            except:
-                pass
-            full_context = {
-                'type': 'call',
-                'peers': caller['_id'],
-                'called': called['_id']
-            }
-        elif 'receive_call' in keys:
-            print("Server receive from websocket: receive_call")
-            receive = text_data_json['receive_call']
-            data = text_data_json['data']
-            full_context = {
-                'type': 'receive_call',
-                'receiver': receive,
-                'data': data
+                'type': 'offer',
+                'to_username': to_username,
+                'peer_data': peer_data
             }
 
         # Send message to room group
@@ -141,50 +143,30 @@ class SignalConsumer(AsyncWebsocketConsumer):
             full_context
         )
 
-    # Receive message from room group
-    async def holy(self, event):
-        message = event['message']
-        # Send message to WebSocket
+    async def init_peer(self, event):
         await self.send(text_data=json.dumps({
-            'message': message
+            'type': 'init_peer',
+            'from_username': event['from_username'],
+            'to_username': event['to_username']
         }))
 
-    async def info(self, event):
-        message = event['message']
-        # Send message to WebSocket
+    async def offer(self, event):
         await self.send(text_data=json.dumps({
-            'message': message
+            'type': 'offer',
+            'to_username': event['to_username'],
+            'peer_data': event['peer_data']
         }))
 
-    async def peer(self, event):
-        message = event['peers']
+    async def user_connected(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'peer',
-            'peers': message
-        }))
-
-    async def call(self, event):
-        message = event['peers']
-        await self.send(text_data=json.dumps({
-            'type': 'call',
-            'peers': message,
-            'called': event['called']
-        }))
-
-    async def receive_call(self, event):
-        receiver = event['receiver']
-        data = event['data']
-        await self.send(text_data=json.dumps({
-            'type': 'receive_call',
-            'receiver': receiver,
-            'data': data
+            'type': 'user_connected',
+            'username': event['username'],
+            'peers': event['peers']
         }))
 
     async def user_disconnected(self, event):
-        username = event['username']
-        peers = event['peers']
         await self.send(text_data=json.dumps({
             'type': 'user_disconnected',
-            'username': username,
-            'peers': peers
+            'username': event['username'],
+            'peers': event['peers']
         }))

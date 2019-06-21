@@ -22,7 +22,11 @@ class PeerCreation {
 
     connect = (otherId) => {
         this.peer.signal(otherId)
-    } 
+    }
+
+    destroy = () => {
+        this.peer.destroy();
+    }
 }
 
 export default PeerCreation;

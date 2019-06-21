@@ -9,13 +9,13 @@ import { connect } from 'react-redux';
 import { Button } from 'react-bootstrap';
 import 'webrtc-adapter';
 import * as actions from '../actions/peers';
+import { throws } from 'assert';
 
 class MainView extends React.Component {
 	constructor(props) {
 		super(props);
-
 		this.getScreenAction = this.getScreenAction.bind(this);
-		this.changeInit = this.changeInit.bind(this);
+		this.callUser = this.callUser.bind(this);
 	}
 
 	peercreation = new PeerCreation();
@@ -28,45 +28,43 @@ class MainView extends React.Component {
 
 		// Connecting to chatroom
 		const socket = new WebSocket('ws://127.0.0.1:8000/ws/signaling/' + room_name + '/');
-		const that = this;
-		socket.onopen = function (e) {
+		socket.onopen = (e) => {
 			//send authentication token to server
 			socket.send(JSON.stringify({access_token: token}));
 		}
-		socket.onmessage = function (e) {
+		socket.onmessage = (e) => {
 			var data = JSON.parse(e.data);
-			console.log("chatSocket from onmessage: ");
-			if (data.type == 'peer') {
-				const peers = data['peers'];
-				that.props.update_peer(peers);
-			} else if (data.type == 'call') {
-				if (data['peers'] == that.props.my_peer['_id']) {
-					console.log("receiving call")
-					that.connectToRoom(data['called']);
-				}
-			} else if (data.type == 'receive_call') {
-				console.log("connected!")
-				if (data['receiver'] == that.props.my_peer['_id']) {
-					console.log("connected!")
-					that.props.peercreation.connect(data['data'])
-				}
-			} else if (data.type == 'user_disconnected') {
-				console.log("user: " + data['username'] + " disconnected!")
-				that.props.update_peer(data['peers']);
+			if (data.type == 'offer') {
+				if (data['to_username'] == username) {
+					console.log("Websocket: received " + data.type);
+					console.log("Signaling offered peer...");
+					this.peercreation.connect(data['peer_data']); //send signal
+				} 
+			}else if (data.type == 'init_peer') {
+				if (data['to_username'] == username) {
+					console.log("Websocket: received " + data.type);
+					this.initiatePeer(data['from_username'], false);
+				} 
+			}else if (data.type == 'user_connected') {
+				console.log("User " + data['username'] + " connected! Received new list of users.");
+				this.props.update_peer(data['peers']);
+			}else if (data.type == 'user_disconnected') {
+				console.log("User " + data['username'] + " disconnected! Received new list of users.")
+				this.props.update_peer(data['peers']);
+				//close stream and destroy peer connection
+				//ONLY IF disconnected_user.username == current auth.user->remotePeer.username
+				//this.remoteVideo.srcObject = null;
+				//this.peercreation.destroy();
+
 			}
 		}
 		socket.onclose = function (e) {
 			console.error('Web socket connection closed!');
 		}
-
-		await this.getScreenAction()
-		var msg = JSON.stringify({
-			'peer': this.props.my_peer
-		});
-		socket.send(msg);
-
+		
 		this.props.update_socket(socket);
 
+		await this.getScreenAction()
 	}
 
 	async getSource() {
@@ -78,46 +76,47 @@ class MainView extends React.Component {
 	}
 
 	async getScreenAction() {
-		var stream = await this.getSource()
-		this.localVideo.srcObject = await stream;
-		const initiator = true;
-		var cur_peer = this.peercreation.init(await stream, initiator);
-
-		this.props.update_localstream(await stream);
-		this.props.update_my_peer(await cur_peer, this.peercreation);
+		var stream = await this.getSource();
+		this.props.update_localstream(stream);
+		this.localVideo.srcObject = stream;
 	}
 
-	connectToRoom(receiver) {
-		console.log('connecting to room');
-		const my_peer = this.props.my_peer;
-		//initialise cur_peer here
+	callUser(username){
+		this.initiatePeer(username, true);
+
+		console.log('Websocket: send init_peer to ' + username);
+		var msg = JSON.stringify({
+			'init_peer': '',
+			'to_username': username,
+			'from_username': this.props.auth.user.username
+		});
+		this.props.socket.send(msg);
+	}
+
+	initiatePeer(username, initiator){
+		var stream = this.props.local_stream;
+		var my_peer = this.peercreation.init(stream, initiator);
+		console.log('Initiated peer: ' + this.props.auth.user.username);
 
 		my_peer.on('signal', (data) => {
-			console.log('sending signal to remote peer!');
+			console.log('Websocket: send offer to ' + username);
 			var msg = JSON.stringify({
-				'receive_call': receiver,
-				'data': data
+				'offer': data,
+				'to_username': username
 			});
 			this.props.socket.send(msg);
 		})
-        // my_peer.on('stream', stream => {
-        //     this.remoteVideo.srcObject = stream
-        // })
-        // my_peer.on('error', function (err) { 
-        //     console.log(err)
-        // })
-	}
-
-	changeInit() {
-		this.props.my_peer.initiator = false;
-		this.props.update_my_peer(this.props.my_peer);
-		console.log(this.props.my_peer);
+		my_peer.on('connect', () => {
+			console.log('PEER CONNECTION SUCCESS!')
+		})
+		my_peer.on('stream', stream => {
+			this.remoteVideo.srcObject = stream
+		})
 	}
 
 	render() {
 		const { all_peers } = this.props;
-		console.log("from rendering!");
-		console.log(this.props);
+		console.log(all_peers);
 
 		return (
 			<div className="main-view">
@@ -125,9 +124,11 @@ class MainView extends React.Component {
 				<div className="thumbnail-wrapper">
 					{
 						Object.keys(all_peers).map((key, index) => {
-							return (
-								<UserThumbNail username={key} key={index} />
-							);
+							if(key!=this.props.auth.user.username){
+								return (
+									<UserThumbNail username={key} key={index} callUser={this.callUser}/>
+								);
+							}
 						})
 					}
 				</div>
@@ -150,16 +151,16 @@ class MainView extends React.Component {
 
 const mapStateToProps = (state) => ({
 	all_peers: state.peer_manager.peers,
-	my_peer: state.peer_manager.my_peer,
-	local_video: state.peer_manager.local_video,
+	my_peer: state.peer_manager.my_peer, //SEEMS REDUNDANT (CAN DELETE? discuss with Jeff)
+	local_stream: state.peer_manager.local_stream, //SEEMS REDUNDANT (CAN DELETE? discuss with Jeff)
 	socket: state.peer_manager.socket,
 	auth: state.auth
 });
 
 const mapDispatchToProps = (dispatch) => ({
 	update_peer: (peer) => dispatch(actions.update_peer(peer)),
-	update_my_peer: (my_peer, peercreation) => dispatch (actions.update_my_peer(my_peer, peercreation)),
-	update_localstream: (stream) => dispatch(actions.update_localstream(stream)),
+	update_my_peer: (my_peer) => dispatch (actions.update_my_peer(my_peer)),  //SEEMS REDUNDANT (CAN DELETE? discuss with Jeff)
+	update_localstream: (stream) => dispatch(actions.update_localstream(stream)), //SEEMS REDUNDANT (CAN DELETE? discuss with Jeff)
 	update_socket: (socket) => dispatch (actions.update_socket(socket))
 });
 

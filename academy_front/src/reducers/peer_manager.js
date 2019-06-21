@@ -2,7 +2,7 @@ import { UPDATE_PEER, DELETE_PEER, UPDATE_MY_PEER, UPDATE_LOCALSTREAM, UPDATE_SO
 
 const initialState = {
     peers: {},
-    local_video: {},
+    local_stream: {},
     remote_peer: {},
     remote_video: {},
     my_peer: {},
@@ -21,15 +21,14 @@ const peer_manager = (state=initialState, action) => {
         case UPDATE_MY_PEER:
             var new_state = {
                 ...state,
-                my_peer: action.my_peer,
-                peercreation: action.peercreation
+                my_peer: action.my_peer
             }
             return new_state;
 
         case UPDATE_LOCALSTREAM:
             var new_state = {
                 ...state,
-                local_video: action.stream
+                local_stream: action.stream
             }
             return new_state;
         case UPDATE_SOCKET:
