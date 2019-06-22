@@ -54,13 +54,7 @@ class SignalConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def get_filter_users(self):
-        return Peer_connection.objects.filter(chat_room=self.room_name) 
-""" 
-    @database_sync_to_async
-    def update_peer(self, new_peer):
-        data = Peer_connection.objects.get(user=self.user)
-        data.peer = new_peer
-        data.save() """
+        return Peer_connection.objects.filter(chat_room=self.room_name)
 
     # Receive message from WebSocket
     async def receive(self, text_data):
