@@ -20,3 +20,4 @@ class UserProfile(models.Model):
     #user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     #dob = models.DateField()
     classroom = models.CharField(max_length=255)
+    isTeacher = models.BooleanField(default=False)

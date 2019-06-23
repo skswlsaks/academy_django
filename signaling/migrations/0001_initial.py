@@ -15,11 +15,10 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Peer_connection',
+            name='Room',
             fields=[
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
-                ('peer', models.TextField(blank=True, null=True)),
-                ('chat_room', models.CharField(max_length=50)),
+                ('room_name', models.CharField(max_length=50)),
             ],
         ),
     ]

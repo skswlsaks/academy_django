@@ -1,7 +1,8 @@
 import { LOGIN_SUCCESS, LOGIN_FAILURE, REGISTER_SUCCESS, REGISTER_FAILURE, LOGOUT_SUCCESS, USER_LOADING, USER_LOADED, AUTH_ERROR } from "./types";
-import { return_errors } from "./errors";
+import { show_alert, hide_alert } from "./alert";
 import { ApiService } from '../ApiService';
 import { authHeader } from '../helpers/authHeader';
+import { parseError } from '../helpers/errorParser';
 
 const apiService = new ApiService();
 
@@ -13,7 +14,13 @@ export const getUser = () => (dispatch, getState) => {
             payload: res.data
         });
     }).catch(err => {
-        dispatch(return_errors(err.response.data, err.response.status));
+        if(err.response.status){
+            const errorMessage = parseError(err.response.data);
+            dispatch(show_alert(errorMessage, 'danger'));
+            setTimeout(() => {
+                dispatch(hide_alert());
+            }, 3000);
+        }
         dispatch({ type: AUTH_ERROR });
     });
 };
@@ -26,7 +33,13 @@ export const login = (username, password) => dispatch => {
             payload: res.data
         });
     }).catch(err => {
-        dispatch(return_errors(err.response.data, err.response.status));
+        if(err.response.status){
+            const errorMessage = parseError(err.response.data);
+            dispatch(show_alert(errorMessage, 'danger'));
+            setTimeout(() => {
+                dispatch(hide_alert());
+            }, 3000);
+        }
         dispatch({ type: LOGIN_FAILURE });
     });
 };
@@ -35,7 +48,13 @@ export const logout = () => (dispatch, getState) => {
     apiService.logout(authHeader(getState)).then(res => {
         dispatch({ type: LOGOUT_SUCCESS });
     }).catch(err => {
-        dispatch(return_errors(err.response.data, err.response.status));
+        if(err.response.status){
+            const errorMessage = parseError(err.response.data);
+            dispatch(show_alert(errorMessage, 'danger'));
+            setTimeout(() => {
+                dispatch(hide_alert());
+            }, 3000);
+        }
     });
 };
 
@@ -46,7 +65,13 @@ export const register = (formData) => dispatch => {
             payload: res.data
         });
     }).catch(err => {
-        dispatch(return_errors(err.response.data, err.response.status));
+        if(err.response.status){
+            const errorMessage = parseError(err.response.data);
+            dispatch(show_alert(errorMessage, 'danger'));
+            setTimeout(() => {
+                dispatch(hide_alert());
+            }, 3000);
+        }
         dispatch({ type: REGISTER_FAILURE });
     });
 };

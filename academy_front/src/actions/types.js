@@ -1,5 +1,4 @@
-export const UPDATE_PEER = 'UPDATE_PEER';
-export const DELETE_PEER = 'DELETE_PEER';
+export const UPDATE_ONLINE_USERS = 'UPDATE_ONLINE_USERS';
 export const UPDATE_MY_PEER = 'UPDATE_MY_PEER';
 export const UPDATE_LOCALSTREAM = 'UPDATE_LOCALSTREAM';
 export const UPDATE_SOCKET = 'UPDATE_SOCKET';
@@ -18,5 +17,5 @@ export const USER_LOADED = 'USER_LOADED';
 
 export const AUTH_ERROR = 'AUTH_ERROR';
 
-export const RETURN_ERRORS = 'RETURN_ERRORS';
-export const CLEAR_ERRORS = 'CLEAR_ERRORS';
+export const SHOW_ALERT = 'SHOW_ALERT';
+export const HIDE_ALERT = 'HIDE_ALERT';

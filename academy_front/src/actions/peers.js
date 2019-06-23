@@ -1,15 +1,9 @@
-import { UPDATE_PEER, DELETE_PEER, UPDATE_MY_PEER, UPDATE_LOCALSTREAM, UPDATE_SOCKET } from './types';
+import { UPDATE_ONLINE_USERS, UPDATE_MY_PEER, UPDATE_LOCALSTREAM, UPDATE_SOCKET } from './types';
 
-export const update_peer = (peer) => {
+export const update_online_users = (online_users) => {
     return {
-        type: UPDATE_PEER,
-        peer
-    };
-}
-export const delete_peer = (peer) => {
-    return {
-        type: DELETE_PEER,
-        peer
+        type: UPDATE_ONLINE_USERS,
+        online_users
     };
 }
 

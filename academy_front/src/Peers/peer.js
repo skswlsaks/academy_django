@@ -3,8 +3,11 @@ import Peer from 'simple-peer';
 class PeerCreation {
 
     peer = null;
+    initialized = false;
     
     init = (stream, initiator) => {
+        this.initialized = true;
+
         this.peer = new Peer({
             initiator: initiator,
             stream: stream, 
@@ -25,6 +28,7 @@ class PeerCreation {
     }
 
     destroy = () => {
+        this.initialized = false;
         this.peer.destroy();
     }
 }

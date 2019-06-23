@@ -8,9 +8,10 @@ import './App.css';
 
 import PrivateRoute from './containers/PrivateRoute';
 
-import MainView from './containers/Main';
-import LoginView from './containers/Login';
-import RegisterView from './containers/Register';
+import TeacherView from './containers/TeacherView';
+import StudentView from './containers/StudentView';
+import LoginView from './containers/LoginView';
+import RegisterView from './containers/RegisterView';
 import MyNavbar from './components/MyNavbar';
 
 import { getUser } from "./actions/auth";
@@ -20,9 +21,9 @@ import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
 class App extends Component {
     componentDidMount() {
-        if(localStorage.getItem("token")){
+        if (localStorage.getItem("token")) {
             store.dispatch(getUser());
-        }else{
+        } else {
             store.dispatch({ type: AUTH_ERROR });
         }
     }
@@ -34,7 +35,8 @@ class App extends Component {
                     <div className="App">
                         <MyNavbar />
                         <Switch>
-                            <PrivateRoute exact path="/" component={MainView} />
+                            <PrivateRoute exact path="/" teacherOnly={true} component={TeacherView} />
+                            <PrivateRoute exact path="/student" component={StudentView} />
                             <Route exact path="/login" component={LoginView} />
                             <Route exact path="/register" component={RegisterView} />
                         </Switch>

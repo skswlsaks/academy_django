@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import PropTypes from 'prop-types';
 import * as reducers from '../reducers'
 
-const PrivateRoute = ({ component: Component, auth, ...rest }) => (
+const PrivateRoute = ({ component: Component, auth, teacherOnly, ...rest }) => (
     <Route
         {...rest}
         render={props => {
@@ -13,7 +13,12 @@ const PrivateRoute = ({ component: Component, auth, ...rest }) => (
             } else if (!auth.isAuthenticated) {
                 return <Redirect to="/login" />;
             } else {
-                return <Component {...props} />;
+                //check if access restricted to teachers
+                if(!teacherOnly || (teacherOnly && auth.user.profile.isTeacher)){
+                    return <Component {...props} />;
+                }else{
+                    return <Redirect to="/student" />;
+                }
             }
         }}
     />

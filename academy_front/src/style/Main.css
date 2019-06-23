@@ -19,6 +19,17 @@ video {
     height: 500px;
     background: #252839;
     width: 100%;
+    padding-top: 40px;
+}
+
+.video-wrapper video{
+    border-style: solid;
+    border-width: 5px;
+    border-color: #ffffff;
+}
+
+.video-wrapper video:nth-child(2n){
+    margin-left: 20px;
 }
 
 .thumbnail-wrapper{
