@@ -2,7 +2,7 @@
 import React from 'react';
 import '../style/Main.css';
 import PeerCreation from '../Peers/peer';
-import StudentThumbnail from '../components/StudentThumbnail';
+import Thumbnail from '../components/Thumbnail';
 import AlertMessage from '../components/AlertMessage';
 import { connect } from 'react-redux';
 import 'webrtc-adapter';
@@ -82,10 +82,10 @@ class TeacherView extends React.Component {
 	}
 	
 	async getSource() {
-		if (navigator.getUserMedia) {
-			return navigator.getUserMedia({ video: false, audio: true });
-		} else if (navigator.mediaDevices.getUserMedia) {
+		if (navigator.mediaDevices.getUserMedia) {
 			return navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+		} else if (navigator.getUserMedia) {
+			return navigator.getUserMedia({ video: false, audio: true });
 		}
 	}
 
@@ -144,7 +144,6 @@ class TeacherView extends React.Component {
 		})
 		my_peer.on('stream', stream => {
 			this.remoteVideo.srcObject = stream;
-			this.remoteAudio.srcObject = stream;
 		})
 	}
 
@@ -191,21 +190,21 @@ class TeacherView extends React.Component {
 						Object.keys(online_users).map((username, index) => {
 							if (username != this.props.auth.user.username && online_users[username] == false) {
 								return (this.state.connectedTo == username) ? (
-									<StudentThumbnail connected={true} key={index} username={username} callUser={this.callUser} />
+									<Thumbnail connected={true} key={index} username={username} callUser={this.callUser} />
 								)
 									: (
-										<StudentThumbnail key={index} username={username} callUser={this.callUser} />
+										<Thumbnail key={index} username={username} callUser={this.callUser} />
 									);
 							}
 						})
 					}
 				</div>
 				<div className="video-wrapper" id="videos">
+					{/* Remote audio is included */}
 					<video id="remoteVideo" autoPlay playsInline ref={video => (this.remoteVideo = video)}
 						onClick={this.handleMouseClick}
 						onMouseMove={this.handleMouseMove.bind(this)} />
 					<audio id="localAudio" autoPlay ref={audio => (this.localAudio = audio)}/>
-					<audio id="remoteAudio" autoPlay ref={audio => (this.remoteAudio = audio)}/>
 				</div>
 			</div>
 		);

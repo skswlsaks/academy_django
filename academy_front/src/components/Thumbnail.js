@@ -1,14 +1,22 @@
 import React from 'react';
 import '../style/UserThumbNail.css';
 
-class StudentThumbnail extends React.Component {
+class Thumbnail extends React.Component {
     constructor (props) {
         super(props);
         this.handleClick = this.handleClick.bind(this);
     }
 
     handleClick(){
-        this.props.callUser(this.props.username);
+        try {
+            if (this.props.notifyTeacher) {
+                this.props.notifyTeacher(this.props.username);
+            } else if (this.props.callUser) {
+                this.props.callUser(this.props.username);
+            }
+        } catch {
+
+        }
     }
 
     render() {
@@ -20,4 +28,4 @@ class StudentThumbnail extends React.Component {
     }   
 }
 
-export default StudentThumbnail;
+export default Thumbnail;

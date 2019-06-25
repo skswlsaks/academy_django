@@ -3,7 +3,7 @@ import React from 'react';
 import '../style/Main.css';
 import PropTypes from 'prop-types';
 import PeerCreation from '../Peers/peer';
-import TeacherThumbnail from '../components/TeacherThumbnail';
+import Thumbnail from '../components/Thumbnail';
 import { connect } from 'react-redux';
 import 'webrtc-adapter';
 import AlertMessage from '../components/AlertMessage';
@@ -13,7 +13,7 @@ import * as alert_actions from '../actions/alert';
 class StudentView extends React.Component {
 	constructor(props) {
 		super(props);
-		this.getScreenAction = this.getScreenAction.bind(this);
+		this.getStream = this.getStream.bind(this);
 		this.notifyTeacher = this.notifyTeacher.bind(this);
 		this.peercreation = new PeerCreation();
 
@@ -82,10 +82,21 @@ class StudentView extends React.Component {
 		}
 	}
 
+	async getAudioSource() {
+		if (navigator.mediaDevices.getUserMedia) {
+			return navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+		} else if (navigator.getUserMedia) {
+			return navigator.getUserMedia({ video: false, audio: true });
+		}
+	}
+
 	async getStream() {
 		var stream = await this.getSource();
+		var audioStream = await this.getAudioSource();
+		var audioTrack = audioStream.getAudioTracks()[0];
+		stream.addTrack(audioTrack);
 		this.localVideo.srcObject = stream;
-		this.localAudio.srcObject = stream;
+		// this.localAudio.srcObject = stream;
 	}
 
 	muteVoice(flag){
@@ -163,9 +174,9 @@ class StudentView extends React.Component {
 						Object.keys(online_users).map((username, index) => {
 							if(username!=this.props.auth.user.username && online_users[username]==true){
 								return (this.state.connectedTo==username) ? (
-									<TeacherThumbnail connected={true} key={index} username={username} notifyTeacher={this.notifyTeacher}/>
+									<Thumbnail connected={true} key={index} username={username} notifyTeacher={this.notifyTeacher}/>
 								) : (
-									<TeacherThumbnail key={index} username={username} notifyTeacher={this.notifyTeacher}/>
+									<Thumbnail key={index} username={username} notifyTeacher={this.notifyTeacher}/>
 								);
 							}
 						})
