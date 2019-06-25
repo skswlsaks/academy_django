@@ -92,11 +92,10 @@ class StudentView extends React.Component {
 
 	async getStream() {
 		var stream = await this.getSource();
-		var audioStream = await this.getAudioSource();
-		var audioTrack = audioStream.getAudioTracks()[0];
+		this.audioStream = await this.getAudioSource();
+		var audioTrack = this.audioStream.getAudioTracks()[0];
 		stream.addTrack(audioTrack);
 		this.localVideo.srcObject = stream;
-		// this.localAudio.srcObject = stream;
 	}
 
 	muteVoice(flag){
@@ -184,7 +183,6 @@ class StudentView extends React.Component {
 				</div>
 				<div className="video-wrapper" id="videos">
 					<video id="localVideo" autoPlay playsInline ref={video => (this.localVideo = video)} />
-					<audio id="localAudio" autoPlay ref={audio => (this.localAudio = audio)}/>
 					<audio id="remoteAudio" autoPlay ref={audio => (this.remoteAudio = audio)}/>
 				</div>
 			</div>

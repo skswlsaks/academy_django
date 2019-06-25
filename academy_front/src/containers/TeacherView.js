@@ -80,8 +80,8 @@ class TeacherView extends React.Component {
 
 		await this.getStream();
 	}
-	
-	async getSource() {
+
+	async getAudioSource() {
 		if (navigator.mediaDevices.getUserMedia) {
 			return navigator.mediaDevices.getUserMedia({ video: false, audio: true });
 		} else if (navigator.getUserMedia) {
@@ -90,9 +90,8 @@ class TeacherView extends React.Component {
 	}
 
 	async getStream() {
-		var stream = await this.getSource();
-		this.audioStream = stream;
-		this.localAudio.srcObject = stream
+		this.audioStream = await this.getAudioSource();
+		this.localAudio.srcObject = this.audioStream;
 	}
 
 	muteVoice(flag){
