@@ -16,9 +16,11 @@ class TeacherView extends React.Component {
 		this.handleMouseClick = this.handleMouseClick.bind(this);
 		this.peercreation = new PeerCreation();
 		this.mouseOffset = { x: null, y: null };
+		this.audioStream = null;
 
 		this.state = {
-			connectedTo: ''
+			connectedTo: '',
+			muted: false
 		};
 	}
 
@@ -75,9 +77,31 @@ class TeacherView extends React.Component {
 		}
 
 		this.props.update_socket(socket);
+
+		await this.getStream();
+	}
+	
+	async getSource() {
+		if (navigator.getUserMedia) {
+			return navigator.getUserMedia({ video: false, audio: true });
+		} else if (navigator.mediaDevices.getUserMedia) {
+			return navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+		}
+	}
+
+	async getStream() {
+		var stream = await this.getSource();
+		this.audioStream = stream;
+		this.localAudio.srcObject = stream
+	}
+
+	muteVoice(flag){
+		this.setState({ muted: flag });
+		this.audioStream.getAudioTracks()[0].enabled = !flag;
 	}
 
 	disconnect() {
+		this.handleShowAlert('Student: `' + this.state.connectedTo + '` has disconnected!', 'warning');
 		this.setState({ connectedTo: '' });
 		this.remoteVideo.srcObject = null;
 	}
@@ -112,14 +136,15 @@ class TeacherView extends React.Component {
 		})
 		my_peer.on('connect', () => {
 			this.setState({ connectedTo: username });
-			console.log('PEER CONNECTION SUCCESS!')
+			console.log('PEER CONNECTION SUCCESS!');
 		})
 		my_peer.on('close', () => {
 			this.disconnect();
-			console.log('PEER CONNECTION CLOSED!')
+			console.log('PEER CONNECTION CLOSED!');
 		})
 		my_peer.on('stream', stream => {
-			this.remoteVideo.srcObject = stream
+			this.remoteVideo.srcObject = stream;
+			this.remoteAudio.srcObject = stream;
 		})
 	}
 
@@ -128,7 +153,14 @@ class TeacherView extends React.Component {
 		// var videoElementPos = this.remoteVideo.getBoundingClientRect();
 		// var normalizedX = this.state.screenX - videoElementPos.left;
 		// var normalizedY = this.state.screenY - videoElementPos.top;
-		console.log("CLICKED " + this.mouseOffset.x + ", " + this.mouseOffset.y);
+		const xRatio = this.mouseOffset.x / this.remoteVideo.offsetWidth;
+		const yRatio = this.mouseOffset.y / this.remoteVideo.offsetHeight;
+		const data = JSON.stringify({
+			type: 'mouse_click', 
+			xRatio: xRatio, 
+			yRatio: yRatio
+		});
+		this.peercreation.peer.send(data);
 	}
 
 	handleMouseMove(e) {
@@ -172,7 +204,8 @@ class TeacherView extends React.Component {
 					<video id="remoteVideo" autoPlay playsInline ref={video => (this.remoteVideo = video)}
 						onClick={this.handleMouseClick}
 						onMouseMove={this.handleMouseMove.bind(this)} />
-					<audio id="audio" autoPlay />
+					<audio id="localAudio" autoPlay ref={audio => (this.localAudio = audio)}/>
+					<audio id="remoteAudio" autoPlay ref={audio => (this.remoteAudio = audio)}/>
 				</div>
 			</div>
 		);

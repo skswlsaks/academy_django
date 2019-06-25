@@ -18,7 +18,8 @@ class StudentView extends React.Component {
 		this.peercreation = new PeerCreation();
 
 		this.state = {
-			connectedTo: ''
+			connectedTo: '',
+			muted: false
 		};
 	}
 
@@ -70,20 +71,26 @@ class StudentView extends React.Component {
 		
 		this.props.update_socket(socket);
 
-		await this.getScreenAction()
+		await this.getStream();
 	}
 
 	async getSource() {
 		if (navigator.getDisplayMedia) {
-			return navigator.getDisplayMedia({ video: true });
+			return navigator.getDisplayMedia({ video: true, audio: true });
 		} else if (navigator.mediaDevices.getDisplayMedia) {
-			return navigator.mediaDevices.getDisplayMedia({ video: true });
+			return navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
 		}
 	}
 
-	async getScreenAction() {
+	async getStream() {
 		var stream = await this.getSource();
 		this.localVideo.srcObject = stream;
+		this.localAudio.srcObject = stream;
+	}
+
+	muteVoice(flag){
+		this.setState({ muted: flag });
+		this.audioStream.getAudioTracks()[0].enabled = !flag;
 	}
 
 	disconnect(){
@@ -109,9 +116,20 @@ class StudentView extends React.Component {
 			this.handleShowAlert('Teacher: `' + username + '` has connected to your screen!', 'primary');
 			console.log('PEER CONNECTION SUCCESS!')
 		})
+		my_peer.on('data', (data) => {
+			const dataObj = JSON.parse(data);
+			if(dataObj.type == 'mouse_click'){
+				this.handleShowAlert('WebRTC data channel received: mouse_click at ' + dataObj.xRatio + ',' + dataObj.yRatio, 'primary');
+			}else{
+				this.handleShowAlert('WebRTC data channel received: ' + data, 'primary');
+			}
+		})
+		my_peer.on('stream', stream => {
+			this.remoteAudio.srcObject = stream;
+		})
 		my_peer.on('close', () => {
 			this.disconnect();
-			console.log('PEER CONNECTION CLOSED!')
+			console.log('PEER CONNECTION CLOSED!');
 		})
 	}
 
@@ -155,7 +173,8 @@ class StudentView extends React.Component {
 				</div>
 				<div className="video-wrapper" id="videos">
 					<video id="localVideo" autoPlay playsInline ref={video => (this.localVideo = video)} />
-					<audio id="audio" autoPlay />
+					<audio id="localAudio" autoPlay ref={audio => (this.localAudio = audio)}/>
+					<audio id="remoteAudio" autoPlay ref={audio => (this.remoteAudio = audio)}/>
 				</div>
 			</div>
 		);
