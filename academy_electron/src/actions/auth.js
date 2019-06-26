@@ -49,6 +49,7 @@ export const logout = () => (dispatch, getState) => {
     socket.send(JSON.stringify({
         'logout': true
     }));
+
     apiService.logout(authHeader(getState)).then(res => {
         dispatch({ type: LOGOUT_SUCCESS });
         dispatch({ type: RESET_PEER_MANAGER });

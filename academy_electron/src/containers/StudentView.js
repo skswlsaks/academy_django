@@ -10,7 +10,11 @@ import AlertMessage from '../components/AlertMessage';
 import * as peer_actions from '../actions/peers';
 import * as alert_actions from '../actions/alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { get_user_media, get_display_media } from '../helpers/mediaDevices';
+import { get_user_media } from '../helpers/mediaDevices';
+
+const electron = window.require('electron');
+const desktopCapturer = electron.desktopCapturer;
+const ipcRenderer = electron.ipcRenderer;
 
 class StudentView extends React.Component {
 	constructor(props) {
@@ -78,20 +82,42 @@ class StudentView extends React.Component {
 		await this.getStream();
 	}
 
-	async getSource() {
-		return get_display_media({ video: true, audio: true });
+	async getStream() {
+		desktopCapturer.getSources({types: ['window', 'screen']}, async (error, sources) => {
+			for(const source of sources) {
+				if (source.name === "Entire screen") {
+					try{
+						const stream = await get_user_media({
+							audio: false,
+							video: {
+								mandatory: {
+									chromeMediaSource: 'desktop',
+									chromeMediaSourceId: source.id,
+									maxWidth: 4000,
+									maxHeight: 4000,
+									minWidth: 1280,
+									minHeight: 720
+								}
+							}
+						});
+						this.handleStream(stream);
+					}catch(e){
+						console.log(e);
+					}
+					return;
+				}
+			}
+		});
 	}
 
 	async getAudioSource() {
 		return get_user_media({ video: false, audio: true });
 	}
 
-	async getStream() {
-		var stream = await this.getSource();
-		var audioStream = await this.getAudioSource();
-		var audioTrack = audioStream.getAudioTracks()[0];
+	async handleStream(stream) {
+		this.audioStream = await this.getAudioSource();
+		var audioTrack = this.audioStream.getAudioTracks()[0];
 		stream.addTrack(audioTrack);
-		this.audioStream = stream;
 		this.localVideo.srcObject = stream;
 	}
 
@@ -126,6 +152,7 @@ class StudentView extends React.Component {
 		my_peer.on('data', (data) => {
 			const dataObj = JSON.parse(data);
 			if(dataObj.type == 'mouse_click'){
+				this.ipcSendMouseClick(dataObj);
 				this.handleShowAlert('WebRTC data channel received: mouse_click at ' + dataObj.xRatio + ',' + dataObj.yRatio, 'primary');
 			}else{
 				this.handleShowAlert('WebRTC data channel received: ' + data, 'primary');
@@ -157,10 +184,17 @@ class StudentView extends React.Component {
 		}, 3000);
 	}
 
+	ipcSendMouseClick(data){
+		ipcRenderer.send('mouse-click', data.xRatio, data.yRatio);
+	}
+
+	testRobot(){
+		ipcRenderer.send('mouse-click-test');
+	}
+
 	render() {
 		const { online_users, show_alert, alert_msg, alert_type } = this.props;
 		const { muted } = this.state;
-		console.log(online_users);
 
 		return (
 			<div className="main-view">
@@ -179,7 +213,7 @@ class StudentView extends React.Component {
 						})
 					}
 				</div>
-				<button id="testbutton">CLICK ME FOR FUN!</button>
+				<button onClick={this.testRobot.bind(this)}>CLICK ME FOR FUN!</button>
 				<div className="video-wrapper" id="videos">
 					<video id="localVideo" autoPlay playsInline ref={video => (this.localVideo = video)} />
 					<audio id="remoteAudio" autoPlay ref={audio => (this.remoteAudio = audio)}/>

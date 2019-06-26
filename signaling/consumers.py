@@ -123,6 +123,10 @@ class SignalConsumer(AsyncWebsocketConsumer):
                 'to_username': text_data_json['to_username'],
                 'from_username': text_data_json['from_username']
             }
+        elif 'logout' in keys:
+            print("Server receive from websocket: logout")
+            await self.close()
+            return
 
         # Send message to room group
         await self.channel_layer.group_send(

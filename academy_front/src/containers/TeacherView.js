@@ -8,12 +8,16 @@ import { connect } from 'react-redux';
 import 'webrtc-adapter';
 import * as peer_actions from '../actions/peers';
 import * as alert_actions from '../actions/alert';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { get_user_media } from '../helpers/mediaDevices';
 
 class TeacherView extends React.Component {
 	constructor(props) {
 		super(props);
 		this.callUser = this.callUser.bind(this);
 		this.handleMouseClick = this.handleMouseClick.bind(this);
+		this.handleMouseMove = this.handleMouseMove.bind(this);
+		this.muteVoice = this.muteVoice.bind(this);
 		this.peercreation = new PeerCreation();
 		this.mouseOffset = { x: null, y: null };
 		this.audioStream = null;
@@ -82,11 +86,7 @@ class TeacherView extends React.Component {
 	}
 
 	async getAudioSource() {
-		if (navigator.mediaDevices.getUserMedia) {
-			return navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-		} else if (navigator.getUserMedia) {
-			return navigator.getUserMedia({ video: false, audio: true });
-		}
+		return get_user_media({ video: false, audio: true });
 	}
 
 	async getStream() {
@@ -178,8 +178,7 @@ class TeacherView extends React.Component {
 
 	render() {
 		const { online_users, show_alert, alert_msg, alert_type } = this.props;
-		console.log(online_users);
-
+		const { muted } = this.state;
 		return (
 			<div className="main-view">
 				<h1>Realtime communication with WebRTC</h1>
@@ -190,20 +189,22 @@ class TeacherView extends React.Component {
 							if (username != this.props.auth.user.username && online_users[username] == false) {
 								return (this.state.connectedTo == username) ? (
 									<Thumbnail connected={true} key={index} username={username} callUser={this.callUser} />
-								)
-									: (
-										<Thumbnail key={index} username={username} callUser={this.callUser} />
-									);
+								) : (
+									<Thumbnail key={index} username={username} callUser={this.callUser} />
+								);
 							}
 						})
 					}
 				</div>
 				<div className="video-wrapper" id="videos">
-					{/* Remote audio is included */}
 					<video id="remoteVideo" autoPlay playsInline ref={video => (this.remoteVideo = video)}
 						onClick={this.handleMouseClick}
-						onMouseMove={this.handleMouseMove.bind(this)} />
+						onMouseMove={this.handleMouseMove} />
 					<audio id="localAudio" autoPlay ref={audio => (this.localAudio = audio)}/>
+					<div>
+						{ muted ? <FontAwesomeIcon onClick={()=>{this.muteVoice(false)}} icon="microphone-slash" style={{color:"#ff2222"}} size="3x"/> 
+						: <FontAwesomeIcon onClick={()=>{this.muteVoice(true)}} icon="microphone" style={{color:"#6DB65B"}} size="3x"/> }
+					</div>
 				</div>
 			</div>
 		);
