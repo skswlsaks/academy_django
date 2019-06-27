@@ -24,11 +24,20 @@ class StudentView extends React.Component {
 		this.peercreation = new PeerCreation();
 		this.muteVoice = this.muteVoice.bind(this);
 		this.audioStream = null;
+		this.screenWidth = 1;
+		this.screenHeight = 1;
 
 		this.state = {
 			connectedTo: '',
 			muted: false
 		};
+
+		ipcRenderer.on('reply-screen-size', (event, screenWidth, screenHeight) => {
+			this.screenWidth = screenWidth;
+			this.screenHeight = screenHeight;
+		});
+		
+		ipcRenderer.send('get-screen-size');
 	}
 
 	async componentDidMount() {
@@ -153,7 +162,12 @@ class StudentView extends React.Component {
 			const dataObj = JSON.parse(data);
 			if(dataObj.type == 'mouse_click'){
 				this.ipcSendMouseClick(dataObj);
-				this.handleShowAlert('WebRTC data channel received: mouse_click at ' + dataObj.xRatio + ',' + dataObj.yRatio, 'primary');
+				console.log('Mouseclick: ' + dataObj.xRatio + ',' + dataObj.yRatio);
+			}else if(dataObj.type == 'mouse_move'){
+				this.ipcSendMouseMove(dataObj);
+			}else if (dataObj.type == 'key_press'){
+				this.ipcSendKeyPress(dataObj.keyCode, dataObj.modifiers);
+				console.log('Keypress: ' + dataObj.keyCode);
 			}else{
 				this.handleShowAlert('WebRTC data channel received: ' + data, 'primary');
 			}
@@ -185,11 +199,19 @@ class StudentView extends React.Component {
 	}
 
 	ipcSendMouseClick(data){
-		ipcRenderer.send('mouse-click', data.xRatio, data.yRatio);
+		var x = Math.round(parseFloat(data.xRatio) * parseFloat(this.screenWidth));
+		var y = Math.round(parseFloat(data.yRatio) * parseFloat(this.screenHeight));
+		ipcRenderer.send('mouse-click', x, y);
 	}
 
-	testRobot(){
-		ipcRenderer.send('mouse-click-test');
+	ipcSendMouseMove(data){
+		var x = Math.round(parseFloat(data.xRatio) * parseFloat(this.screenWidth));
+		var y = Math.round(parseFloat(data.yRatio) * parseFloat(this.screenHeight));
+		ipcRenderer.send('mouse-move', x, y);
+	}
+
+	ipcSendKeyPress(keyCode, modifiers){
+		ipcRenderer.send('key-press', keyCode, modifiers);
 	}
 
 	render() {
@@ -213,7 +235,6 @@ class StudentView extends React.Component {
 						})
 					}
 				</div>
-				<button onClick={this.testRobot.bind(this)}>CLICK ME FOR FUN!</button>
 				<div className="video-wrapper" id="videos">
 					<video id="localVideo" autoPlay playsInline ref={video => (this.localVideo = video)} />
 					<audio id="remoteAudio" autoPlay ref={audio => (this.remoteAudio = audio)}/>

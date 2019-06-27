@@ -6,15 +6,21 @@ const BrowserWindow = electron.BrowserWindow;
 const path = require('path');
 const url = require('url');
 
+var vkey = require('vkey');
+
 const ipcMain = electron.ipcMain;
 
 let mainWindow;
 
 function createWindow() {
     const startUrl = process.env.ELECTRON_START_URL || 'file://' + path.join(__dirname, '../build/index.html');
-    mainWindow = new BrowserWindow({ webPreferences: { nodeIntegration: true }, width: 900, height: 680 });
+    mainWindow = new BrowserWindow({ webPreferences: { nodeIntegration: true }, width: 700, height: 680 });
     mainWindow.loadURL(startUrl);
     mainWindow.on('closed', () => mainWindow = null);
+
+    let anotherWindow = new BrowserWindow({ webPreferences: { nodeIntegration: true }, width: 700, height: 680 });
+    anotherWindow.loadURL(startUrl);
+    anotherWindow.on('closed', () => mainWindow = null);
 }
 
 app.on('ready', createWindow);
@@ -31,17 +37,53 @@ app.on('activate', () => {
     }
 });
 
-ipcMain.on('mouse-click', (e, ratioX, ratioY) => {
+ipcMain.on('get-screen-size', (event, args) => {
     var screenSize = robot.getScreenSize();
-    console.log(ratioX + "," + ratioY);
-    var x = Math.round(parseFloat(ratioX) * screenSize.width);
-    var y = Math.round(parseFloat(ratioY) * screenSize.height);
-    console.log(screenSize.width + "/" + x + "," + screenSize.height + "/" + y);
+    event.sender.send('reply-screen-size', screenSize.width, screenSize.height);
+});
+
+ipcMain.on('mouse-click', (event, x, y) => {
     robot.moveMouse(x, y);
     robot.mouseClick();
 });
 
-ipcMain.on('mouse-click-test', (e, args) => {
+ipcMain.on('mouse-move', (event, x, y) => {
+    console.log("mouse moved: " + x + "," + y);
+    robot.moveMouseSmooth(x, y);
+});
+
+ipcMain.on('key-press', (event, keyCode, modifiers) => {
+    var k = vkey[keyCode].toLowerCase();
+    if (k === '<space>') k = ' ';
+
+    if (k[0] !== '<') {
+        console.log('typed ' + k + ' ' + JSON.stringify(modifiers))
+        if (modifiers.length > 0 && modifiers[0]) robot.keyTap(k, modifiers[0])
+        else robot.keyTap(k)
+    } else {
+        if (k === '<enter>') robot.keyTap('enter')
+        else if (k === '<backspace>') robot.keyTap('backspace')
+        else if (k === '<up>') robot.keyTap('up')
+        else if (k === '<down>') robot.keyTap('down')
+        else if (k === '<left>') robot.keyTap('left')
+        else if (k === '<right>') robot.keyTap('right')
+        else if (k === '<delete>') robot.keyTap('delete')
+        else if (k === '<home>') robot.keyTap('home')
+        else if (k === '<end>') robot.keyTap('end')
+        else if (k === '<page-up>') robot.keyTap('pageup')
+        else if (k === '<page-down>') robot.keyTap('pagedown')
+        
+        else if (k === '<control>') robot.keyTap('control')
+        else if (k === '<meta>') robot.keyTap('command')
+        else if (k === '<alt>') robot.keyTap('alt')
+        else if (k === '<shift>') robot.keyTap('shift')
+
+        else if (k === '<escape>') console.log('escape pressed')
+        else console.log('did not type ' + k)
+    }
+});
+
+ipcMain.on('mouse-click-test', (event, args) => {
     robot.setMouseDelay(2);
 
     var twoPI = Math.PI * 2.0;

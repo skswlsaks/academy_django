@@ -11,15 +11,19 @@ import * as alert_actions from '../actions/alert';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { get_user_media } from '../helpers/mediaDevices';
 
+const FULLSCREEN_MODE = false;
+
 class TeacherView extends React.Component {
 	constructor(props) {
 		super(props);
 		this.callUser = this.callUser.bind(this);
 		this.handleMouseClick = this.handleMouseClick.bind(this);
 		this.handleMouseMove = this.handleMouseMove.bind(this);
+		this.handleKeyPress = this.handleKeyPress.bind(this);
+		this.handleMouseMoveThrottled = this.throttled(1000, this.handleMouseMove);
 		this.muteVoice = this.muteVoice.bind(this);
 		this.peercreation = new PeerCreation();
-		this.mouseOffset = { x: null, y: null };
+		this.mousePosition = { x: null, y: null };
 		this.audioStream = null;
 
 		this.state = {
@@ -29,6 +33,8 @@ class TeacherView extends React.Component {
 	}
 
 	async componentDidMount() {
+		document.addEventListener("keydown", this.handleKeyPress, false);
+
 		// var room = prompt("Enter room name:");
 		const username = this.props.auth.user.username;
 		const token = this.props.auth.token;
@@ -85,6 +91,10 @@ class TeacherView extends React.Component {
 		await this.getStream();
 	}
 
+	componentWillUnmount() {
+		document.removeEventListener("keydown", this.handleKeyPress, false);
+	}
+
 	async getAudioSource() {
 		return get_user_media({ video: false, audio: true });
 	}
@@ -94,7 +104,7 @@ class TeacherView extends React.Component {
 		this.localAudio.srcObject = this.audioStream;
 	}
 
-	muteVoice(flag){
+	muteVoice(flag) {
 		this.setState({ muted: flag });
 		this.audioStream.getAudioTracks()[0].enabled = !flag;
 	}
@@ -139,6 +149,7 @@ class TeacherView extends React.Component {
 		})
 		my_peer.on('close', () => {
 			this.disconnect();
+			document.removeEventListener("keydown", this.handleKeyPress, false);
 			console.log('PEER CONNECTION CLOSED!');
 		})
 		my_peer.on('stream', stream => {
@@ -147,26 +158,49 @@ class TeacherView extends React.Component {
 	}
 
 	handleMouseClick() {
-		//normalize screen coordinates relative to video element
-		// var videoElementPos = this.remoteVideo.getBoundingClientRect();
-		// var normalizedX = this.state.screenX - videoElementPos.left;
-		// var normalizedY = this.state.screenY - videoElementPos.top;
-		const xRatio = this.mouseOffset.x / this.remoteVideo.offsetWidth;
-		const yRatio = this.mouseOffset.y / this.remoteVideo.offsetHeight;
-		const data = JSON.stringify({
-			type: 'mouse_click', 
-			xRatio: xRatio, 
-			yRatio: yRatio
-		});
-		this.peercreation.peer.send(data);
+		if (this.isFullscreen()) {
+			const data = JSON.stringify({
+				type: 'mouse_click',
+				xRatio: this.mousePosition.xRatio,
+				yRatio: this.mousePosition.yRatio
+			});
+			this.peercreation.peer.send(data);
+		} else {
+			this.openFullscreen();
+		}
 	}
 
 	handleMouseMove(e) {
-		var xVal = e.nativeEvent.offsetX;
-		var yVal = e.nativeEvent.offsetY;
-		this.mouseOffset = { x: xVal < 0 ? 0 : xVal, y: yVal < 0 ? 0 : yVal };
-		// var mouse = robotjs.getMousePos();
-		// console.log(mouse.x + "," + mouse.y);
+		if (this.isFullscreen()) {
+			var xVal = e.nativeEvent.offsetX;
+			var yVal = e.nativeEvent.offsetY;
+			xVal = xVal < 0 ? 0 : xVal;
+			yVal = yVal < 0 ? 0 : yVal;
+			this.mousePosition = { xRatio: xVal / this.remoteVideo.offsetWidth, yRatio: yVal / this.remoteVideo.offsetHeight };
+
+			const data = JSON.stringify({
+				type: 'mouse_move',
+				xRatio: this.mousePosition.xRatio,
+				yRatio: this.mousePosition.yRatio
+			});
+			this.peercreation.peer.send(data);
+		}
+	}
+
+	handleKeyPress(e) {
+		if (this.isFullscreen()) {
+			if (e.isComposing || e.keyCode === 229) {
+				return;
+			}
+
+			var modifiers = [];
+			if (e.ctrlKey) modifiers.push('control')
+			if (e.altKey) modifiers.push('alt')
+			if (e.shiftKey) modifiers.push('shift')
+			if (e.metaKey) modifiers.push('command')
+
+			this.peercreation.peer.send(JSON.stringify({ type: 'key_press', keyCode: event.keyCode, modifiers: modifiers }));
+		}
 	}
 
 	handleShowAlert(msg, type) {
@@ -176,40 +210,69 @@ class TeacherView extends React.Component {
 		}, 3000);
 	}
 
-	render() {
-		const { online_users, show_alert, alert_msg, alert_type } = this.props;
-		const { muted } = this.state;
+	isFullscreen() {
+		return !FULLSCREEN_MODE || document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen;
+	}
 
-		return (
-			<div className="main-view">
-				<h1>Realtime communication with WebRTC</h1>
-				<AlertMessage msg={alert_msg} type={alert_type} showAlert={show_alert} />
-				<div className="thumbnail-wrapper">
-					{
-						Object.keys(online_users).map((username, index) => {
-							if (username != this.props.auth.user.username && online_users[username] == false) {
-								return (this.state.connectedTo == username) ? (
-									<Thumbnail connected={true} key={index} username={username} callUser={this.callUser} />
-								) : (
+	openFullscreen() {
+		var elem = this.remoteVideo;
+		if (elem.requestFullscreen) {
+			elem.requestFullscreen();
+		} else if (elem.mozRequestFullScreen) { /* Firefox */
+			elem.mozRequestFullScreen();
+		} else if (elem.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+			elem.webkitRequestFullscreen();
+		} else if (elem.msRequestFullscreen) { /* IE/Edge */
+			elem.msRequestFullscreen();
+		}
+	}
+
+	throttled(delay, fn) {
+		let lastCall = 0;
+		return function (...args) {
+			const now = (new Date).getTime();
+			if (now - lastCall < delay) {
+				return;
+			}
+			lastCall = now;
+			return fn(...args);
+		}
+	}
+
+render() {
+	const { online_users, show_alert, alert_msg, alert_type } = this.props;
+	const { muted } = this.state;
+
+	return (
+		<div className="main-view">
+			<h1>Realtime communication with WebRTC</h1>
+			<AlertMessage msg={alert_msg} type={alert_type} showAlert={show_alert} />
+			<div className="thumbnail-wrapper">
+				{
+					Object.keys(online_users).map((username, index) => {
+						if (username != this.props.auth.user.username && online_users[username] == false) {
+							return (this.state.connectedTo == username) ? (
+								<Thumbnail connected={true} key={index} username={username} callUser={this.callUser} />
+							) : (
 									<Thumbnail key={index} username={username} callUser={this.callUser} />
 								);
-							}
-						})
-					}
-				</div>
-				<div className="video-wrapper" id="videos">
-					<video id="remoteVideo" autoPlay playsInline ref={video => (this.remoteVideo = video)}
-						onClick={this.handleMouseClick}
-						onMouseMove={this.handleMouseMove} />
-					<audio id="localAudio" autoPlay ref={audio => (this.localAudio = audio)}/>
-					<div>
-						{ muted ? <FontAwesomeIcon onClick={()=>{this.muteVoice(false)}} icon="microphone-slash" style={{color:"#ff2222"}} size="3x"/> 
-						: <FontAwesomeIcon onClick={()=>{this.muteVoice(true)}} icon="microphone" style={{color:"#6DB65B"}} size="3x"/> }
-					</div>
+						}
+					})
+				}
+			</div>
+			<div className="video-wrapper" id="videos">
+				<video id="remoteVideo" autoPlay playsInline ref={video => (this.remoteVideo = video)}
+					onClick={this.handleMouseClick}
+					onMouseMove={this.handleMouseMoveThrottled} controls={false} />
+				<audio id="localAudio" autoPlay ref={audio => (this.localAudio = audio)} />
+				<div>
+					{muted ? <FontAwesomeIcon onClick={() => { this.muteVoice(false) }} icon="microphone-slash" style={{ color: "#ff2222" }} size="3x" />
+						: <FontAwesomeIcon onClick={() => { this.muteVoice(true) }} icon="microphone" style={{ color: "#6DB65B" }} size="3x" />}
 				</div>
 			</div>
-		);
-	}
+		</div>
+	);
+}
 }
 
 const mapStateToProps = (state) => ({

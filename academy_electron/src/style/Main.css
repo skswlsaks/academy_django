@@ -35,3 +35,8 @@ video {
 .thumbnail-wrapper{
     margin-bottom: 10px;
 }
+
+/*HIDES THE VIDEO CONTROLS*/
+::-webkit-media-controls {
+    display:none !important;
+}

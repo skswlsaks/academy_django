@@ -17,10 +17,12 @@ class TeacherView extends React.Component {
 		this.callUser = this.callUser.bind(this);
 		this.handleMouseClick = this.handleMouseClick.bind(this);
 		this.handleMouseMove = this.handleMouseMove.bind(this);
+		this.handleKeyPress = this.handleKeyPress.bind(this);
 		this.muteVoice = this.muteVoice.bind(this);
 		this.peercreation = new PeerCreation();
-		this.mouseOffset = { x: null, y: null };
+		this.mousePosition = { xRatio: null, yRatio: null };
 		this.audioStream = null;
+		this.fullscreen = false;
 
 		this.state = {
 			connectedTo: '',
@@ -29,6 +31,8 @@ class TeacherView extends React.Component {
 	}
 
 	async componentDidMount() {
+		document.addEventListener("keydown", this.handleKeyPress, false);
+
 		// var room = prompt("Enter room name:");
 		const username = this.props.auth.user.username;
 		const token = this.props.auth.token;
@@ -85,6 +89,10 @@ class TeacherView extends React.Component {
 		await this.getStream();
 	}
 
+	componentWillUnmount(){
+		document.removeEventListener("keydown", this.handleKeyPress, false);
+	}
+
 	async getAudioSource() {
 		return get_user_media({ video: false, audio: true });
 	}
@@ -139,6 +147,7 @@ class TeacherView extends React.Component {
 		})
 		my_peer.on('close', () => {
 			this.disconnect();
+			document.removeEventListener("keydown", this.handleKeyPress, false);
 			console.log('PEER CONNECTION CLOSED!');
 		})
 		my_peer.on('stream', stream => {
@@ -147,26 +156,52 @@ class TeacherView extends React.Component {
 	}
 
 	handleMouseClick() {
-		//normalize screen coordinates relative to video element
-		// var videoElementPos = this.remoteVideo.getBoundingClientRect();
-		// var normalizedX = this.state.screenX - videoElementPos.left;
-		// var normalizedY = this.state.screenY - videoElementPos.top;
-		const xRatio = this.mouseOffset.x / this.remoteVideo.offsetWidth;
-		const yRatio = this.mouseOffset.y / this.remoteVideo.offsetHeight;
-		const data = JSON.stringify({
-			type: 'mouse_click', 
-			xRatio: xRatio, 
-			yRatio: yRatio
-		});
-		this.peercreation.peer.send(data);
+		if(this.isFullscreen()){
+			const data = JSON.stringify({
+				type: 'mouse_click',
+				xRatio: this.mousePosition.xRatio,
+				yRatio: this.mousePosition.yRatio
+			});
+			this.peercreation.peer.send(data);
+		}else{
+			//this.setFullScreen(true);
+			this.openFullscreen();
+		}
 	}
 
 	handleMouseMove(e) {
-		var xVal = e.nativeEvent.offsetX;
-		var yVal = e.nativeEvent.offsetY;
-		this.mouseOffset = { x: xVal < 0 ? 0 : xVal, y: yVal < 0 ? 0 : yVal };
-		// var mouse = robotjs.getMousePos();
-		// console.log(mouse.x + "," + mouse.y);
+		if(this.isFullscreen()){
+			var xVal = e.nativeEvent.offsetX;
+			var yVal = e.nativeEvent.offsetY;
+			xVal = xVal < 0 ? 0 : xVal;
+			yVal = yVal < 0 ? 0 : yVal;
+			this.mousePosition = { xRatio: xVal / this.remoteVideo.offsetWidth, yRatio: yVal / this.remoteVideo.offsetHeight };
+
+			const data = JSON.stringify({
+				type: 'mouse_move',
+				xRatio: this.mousePosition.xRatio,
+				yRatio: this.mousePosition.yRatio
+			});
+			this.peercreation.peer.send(data);
+		}
+	}
+
+	handleKeyPress(e){
+		if(this.isFullscreen()){
+			e.preventDefault();
+
+			if(e.isComposing || e.keyCode === 229) {
+				return;
+			}
+
+			var modifiers = [];
+			if (e.ctrlKey) modifiers.push('control')
+			if (e.altKey) modifiers.push('alt')
+			if (e.shiftKey) modifiers.push('shift')
+			if (e.metaKey) modifiers.push('command')
+
+			this.peercreation.peer.send(JSON.stringify({type:'key_press', keyCode: event.keyCode, modifiers: modifiers}));
+		}
 	}
 
 	handleShowAlert(msg, type) {
@@ -174,6 +209,23 @@ class TeacherView extends React.Component {
 		setTimeout(() => {
 			this.props.hide_alert();
 		}, 3000);
+	}
+
+	isFullscreen(){
+		return document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen;
+	}
+
+	openFullscreen() {
+		var elem = this.remoteVideo;
+		if (elem.requestFullscreen) {
+			elem.requestFullscreen();
+		} else if (elem.mozRequestFullScreen) { /* Firefox */
+			elem.mozRequestFullScreen();
+		} else if (elem.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+			elem.webkitRequestFullscreen();
+		} else if (elem.msRequestFullscreen) { /* IE/Edge */
+			elem.msRequestFullscreen();
+		}
 	}
 
 	render() {
@@ -199,7 +251,7 @@ class TeacherView extends React.Component {
 				<div className="video-wrapper" id="videos">
 					<video id="remoteVideo" autoPlay playsInline ref={video => (this.remoteVideo = video)}
 						onClick={this.handleMouseClick}
-						onMouseMove={this.handleMouseMove} />
+						onMouseMove={this.handleMouseMove} controls={false} />
 					<audio id="localAudio" autoPlay ref={audio => (this.localAudio = audio)}/>
 					<div>
 						{ muted ? <FontAwesomeIcon onClick={()=>{this.muteVoice(false)}} icon="microphone-slash" style={{color:"#ff2222"}} size="3x"/> 

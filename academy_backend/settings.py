@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'signaling', #django app - signaling
     'api', #django app - api
-    'corsheaders', #used for testing in localhost
+    'corsheaders', #ONLY FOR TESTING
     'channels',
     'rest_framework',
     'knox'
@@ -78,7 +78,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', #ONLY FOR TESTING
 ]
 
 ROOT_URLCONF = 'academy_backend.urls'
@@ -166,4 +166,4 @@ CHANNEL_LAYERS = {
     },
 }
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = True #ONLY FOR TESTING
