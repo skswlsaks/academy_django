@@ -8,15 +8,6 @@ RUN mkdir /app
 # Setup my working directory 
 WORKDIR /app
 
-# Install "pipenv"
-RUN pip install pipenv
-
-# In a similar fashion as before if the "Pipfile.lock" doesn't change, the
-# image layer is going to be cached.
-COPY Pipfile Pipfile
-COPY Pipfile.lock Pipfile.lock
-RUN pipenv install --deploy --system
-
-ADD . /app
-RUN pip install .
-
+COPY requirements.txt /app/
+RUN pip install -r requirements.txt 
+COPY . /app/

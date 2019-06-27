@@ -4,11 +4,13 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
-django = "2.2.2"
-channels = "2.2.0"
-djangorestframework = "3.9.4"
-channels-redis = "2.4.0"
-django-rest-knox = "4.1.0"
+django = "*"
+channels = "*"
+djangorestframework = "*"
+channels-redis = "*"
+django-rest-knox = "*"
+gunicorn = "*"
+
 
 [requires]
 python_version = "3.7"

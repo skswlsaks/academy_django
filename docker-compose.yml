@@ -1,5 +1,5 @@
 version : '3'
-services: # docker-compose 에서 컨테이너(service) 단위를 묶음
+services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
   db:
     image: mysql:5.7
     environment:
@@ -16,24 +16,25 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음
     expose:
       # Opens port 3306 on the container
       - '3306'
-      # Where our data will be persisted
-    volumes:
-      - my-db:/var/lib/mysql
+  
   
   redis:
     image: redis:latest
 
 
   django: # 앱 service 이름
-    build:
-      dockerfile : Dockerfile # 빌드할 Docker 파일 위치
-
+    build: 
+      context: .
+      dockerfile: Dockerfile
+   
     # docker-compose up 을 command 창에 입력하면 실행할 명령어
     command: python manage.py runserver 0.0.0.0:8000 
     # 로컬 폴더(.)와 docker 의 /app 폴더를 마운트(연결)
     volumes: 
       - .:/app
     # docker 와 로컬에서 서로 입력 출력할 포트, 접근할 포트
+    expose:
+      - "8000"
     ports: 
       - "8000:8000"
     # docker 내에서 필요한 환경변수 설정
@@ -41,6 +42,6 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음
       - redis 
       - db
     environment: 
-      - DJANGO_SECRET_KEY
+      - SECRET_KEY='_d+ig#cwuqe07os!x73^@k6d111bykg%f3%=yi$jsql2ab+t39'
       - DB_NAME='db'
 

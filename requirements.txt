@@ -1,0 +1,7 @@
+channels==2.2.0
+channels-redis==2.4.0
+Django==2.2.2
+django-rest-knox==4.1.0
+djangorestframework==3.9.4
+mysqlclient==1.4.2.post1
+
