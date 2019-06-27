@@ -14,7 +14,7 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음
       - "8000:8000"
     # docker 내에서 필요한 환경변수 설정
     env: 
-      - DJANGO_SECRET_KEY='_d+ig#cwuqe07os!x73^@k6d111bykg%f3%=yi$jsql2ab+t39'
+      - DJANGO_SECRET_KEY
       - DB_NAME='db'
 
   db:
@@ -36,3 +36,6 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음
       # Where our data will be persisted
     volumes:
       - my-db:/var/lib/mysql
+  
+  redis:
+    image: redis:latest
