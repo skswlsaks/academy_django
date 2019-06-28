@@ -1,4 +1,4 @@
+secrets.json
 __pycache__
 *.pyc
 /node_modules
-secrets.json
