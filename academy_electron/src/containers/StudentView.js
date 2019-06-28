@@ -47,7 +47,7 @@ class StudentView extends React.Component {
 		const room_name = 'room1';
 
 		// Connecting to chatroom
-		const socket = new WebSocket('ws://127.0.0.1:8000/ws/signaling/' + room_name + '/');
+		const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || '192.168.0.3:8000') + '/ws/signaling/' + room_name + '/');
 
 		socket.onopen = (e) => {
 			//send authentication token to server
