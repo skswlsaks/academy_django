@@ -3,17 +3,14 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
-[dev-packages]
-autopep8 = "*"
-
 [packages]
 django = "*"
 channels = "*"
 djangorestframework = "*"
-djangorestframework-simplejwt = "*"
 channels-redis = "*"
 django-rest-knox = "*"
-django-cors-headers = "*"
+gunicorn = "*"
+
 
 [requires]
 python_version = "3.7"
