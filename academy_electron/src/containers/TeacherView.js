@@ -41,7 +41,7 @@ class TeacherView extends React.Component {
 		const room_name = 'room1';
 
 		// Connecting to chatroom
-		const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || '192.168.0.3:8000') + '/ws/signaling/' + room_name + '/');
+		const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || 'www.tonyscoding.com:8000') + '/ws/signaling/' + room_name + '/');
 
 		socket.onopen = (e) => {
 			//send authentication token to server
@@ -264,7 +264,7 @@ render() {
 				<video id="remoteVideo" autoPlay playsInline ref={video => (this.remoteVideo = video)}
 					onClick={this.handleMouseClick}
 					onMouseMove={this.handleMouseMoveThrottled} controls={false} />
-				<audio id="localAudio" autoPlay ref={audio => (this.localAudio = audio)} />
+				<audio id="localAudio" muted="muted" autoPlay ref={audio => (this.localAudio = audio)} />
 				<div>
 					{muted ? <FontAwesomeIcon onClick={() => { this.muteVoice(false) }} icon="microphone-slash" style={{ color: "#ff2222" }} size="3x" />
 						: <FontAwesomeIcon onClick={() => { this.muteVoice(true) }} icon="microphone" style={{ color: "#6DB65B" }} size="3x" />}
