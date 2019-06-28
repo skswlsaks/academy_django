@@ -17,10 +17,6 @@ function createWindow() {
     mainWindow = new BrowserWindow({ webPreferences: { nodeIntegration: true }, width: 700, height: 680 });
     mainWindow.loadURL(startUrl);
     mainWindow.on('closed', () => mainWindow = null);
-
-    let testWindow = new BrowserWindow({ webPreferences: { nodeIntegration: true }, width: 700, height: 680 });
-    testWindow.loadURL(startUrl);
-    testWindow.on('closed', () => testWindow = null);
 }
 
 app.on('ready', createWindow);
