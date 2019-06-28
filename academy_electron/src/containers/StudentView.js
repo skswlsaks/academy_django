@@ -47,7 +47,7 @@ class StudentView extends React.Component {
 		const room_name = 'room1';
 
 		// Connecting to chatroom
-		const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || '192.168.0.3:8000') + '/ws/signaling/' + room_name + '/');
+		const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || 'www.tonyscoding.com:8000') + '/ws/signaling/' + room_name + '/');
 
 		socket.onopen = (e) => {
 			//send authentication token to server
@@ -236,7 +236,7 @@ class StudentView extends React.Component {
 					}
 				</div>
 				<div className="video-wrapper" id="videos">
-					<video id="localVideo" autoPlay playsInline ref={video => (this.localVideo = video)} />
+					<video id="localVideo"  muted="muted" autoPlay playsInline ref={video => (this.localVideo = video)} />
 					<audio id="remoteAudio" autoPlay ref={audio => (this.remoteAudio = audio)}/>
 					<div>
 						{ muted ? <FontAwesomeIcon onClick={()=>{this.muteVoice(false)}} icon="microphone-slash" style={{color:"#ff2222"}} size="3x"/> 
