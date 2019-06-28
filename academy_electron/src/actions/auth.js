@@ -14,7 +14,7 @@ export const getUser = () => (dispatch, getState) => {
             payload: res.data
         });
     }).catch(err => {
-        if(err.response.status){
+        if(err.response && err.response.status){
             const errorMessage = parseError(err.response.data);
             dispatch(show_alert(errorMessage, 'danger'));
             setTimeout(() => {
@@ -33,7 +33,7 @@ export const login = (username, password) => dispatch => {
             payload: res.data
         });
     }).catch(err => {
-        if(err.response.status){
+        if(err.response && err.response.status){
             const errorMessage = parseError(err.response.data);
             dispatch(show_alert(errorMessage, 'danger'));
             setTimeout(() => {
@@ -54,7 +54,7 @@ export const logout = () => (dispatch, getState) => {
         dispatch({ type: LOGOUT_SUCCESS });
         dispatch({ type: RESET_PEER_MANAGER });
     }).catch(err => {
-        if(err.response.status){
+        if(err.response && err.response.status){
             const errorMessage = parseError(err.response.data);
             dispatch(show_alert(errorMessage, 'danger'));
             setTimeout(() => {
@@ -71,7 +71,7 @@ export const register = (formData) => dispatch => {
             payload: res.data
         });
     }).catch(err => {
-        if(err.response.status){
+        if(err.response && err.response.status){
             const errorMessage = parseError(err.response.data);
             dispatch(show_alert(errorMessage, 'danger'));
             setTimeout(() => {

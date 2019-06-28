@@ -20,7 +20,7 @@ class TeacherView extends React.Component {
 		this.handleMouseClick = this.handleMouseClick.bind(this);
 		this.handleMouseMove = this.handleMouseMove.bind(this);
 		this.handleKeyPress = this.handleKeyPress.bind(this);
-		this.handleMouseMoveThrottled = this.throttled(1000, this.handleMouseMove);
+		this.handleMouseMoveThrottled = this.throttled(500, this.handleMouseMove);
 		this.muteVoice = this.muteVoice.bind(this);
 		this.peercreation = new PeerCreation();
 		this.mousePosition = { x: null, y: null };
@@ -72,6 +72,7 @@ class TeacherView extends React.Component {
 			} else if (data.type == 'user_disconnected') {
 				console.log("User " + data['username'] + " disconnected! Received new list of users.")
 				if (data['username'] == this.state.connectedTo) {
+					this.handleShowAlert('Student: `' + this.state.connectedTo + '` has disconnected!', 'warning');
 					this.disconnect();
 				}
 				this.props.update_online_users(data['users_arr']);
@@ -92,7 +93,15 @@ class TeacherView extends React.Component {
 	}
 
 	componentWillUnmount() {
+		console.log("teacher view unmounting...cleaning up resources");
+		this.cleanUpResources();
+	}
+
+	cleanUpResources(){
 		document.removeEventListener("keydown", this.handleKeyPress, false);
+		this.disconnect();
+		this.audioStream = null;
+		this.props.socket.close();
 	}
 
 	async getAudioSource() {
@@ -110,9 +119,11 @@ class TeacherView extends React.Component {
 	}
 
 	disconnect() {
-		this.handleShowAlert('Student: `' + this.state.connectedTo + '` has disconnected!', 'warning');
 		this.setState({ connectedTo: '' });
-		this.remoteVideo.srcObject = null;
+		this.remoteVideo = null;
+		if (this.peercreation.initialized) {
+			this.peercreation.destroy();
+		}
 	}
 
 	callUser(username) {
@@ -132,7 +143,9 @@ class TeacherView extends React.Component {
 			this.peercreation.destroy();
 			console.log('Existing peer connection destroyed');
 		}
-		var my_peer = this.peercreation.init(null, initiator);
+		
+		var stream = this.localAudio.srcObject;
+		var my_peer = this.peercreation.init(stream, initiator);
 		console.log('Initiated peer: ' + this.props.auth.user.username);
 
 		my_peer.on('signal', (data) => {
@@ -149,7 +162,6 @@ class TeacherView extends React.Component {
 		})
 		my_peer.on('close', () => {
 			this.disconnect();
-			document.removeEventListener("keydown", this.handleKeyPress, false);
 			console.log('PEER CONNECTION CLOSED!');
 		})
 		my_peer.on('stream', stream => {
@@ -158,7 +170,7 @@ class TeacherView extends React.Component {
 	}
 
 	handleMouseClick() {
-		if (this.isFullscreen()) {
+		if (this.isFullscreen() && this.state.connectedTo) {
 			const data = JSON.stringify({
 				type: 'mouse_click',
 				xRatio: this.mousePosition.xRatio,
@@ -171,7 +183,7 @@ class TeacherView extends React.Component {
 	}
 
 	handleMouseMove(e) {
-		if (this.isFullscreen()) {
+		if (this.isFullscreen() && this.state.connectedTo) {
 			var xVal = e.nativeEvent.offsetX;
 			var yVal = e.nativeEvent.offsetY;
 			xVal = xVal < 0 ? 0 : xVal;
@@ -188,7 +200,7 @@ class TeacherView extends React.Component {
 	}
 
 	handleKeyPress(e) {
-		if (this.isFullscreen()) {
+		if (this.isFullscreen() && this.state.connectedTo) {
 			if (e.isComposing || e.keyCode === 229) {
 				return;
 			}
@@ -261,10 +273,10 @@ render() {
 				}
 			</div>
 			<div className="video-wrapper" id="videos">
+				<audio id="localAudio" autoPlay muted ref={audio => (this.localAudio = audio)} />
 				<video id="remoteVideo" autoPlay playsInline ref={video => (this.remoteVideo = video)}
 					onClick={this.handleMouseClick}
 					onMouseMove={this.handleMouseMoveThrottled} controls={false} />
-				<audio id="localAudio" muted="muted" autoPlay ref={audio => (this.localAudio = audio)} />
 				<div>
 					{muted ? <FontAwesomeIcon onClick={() => { this.muteVoice(false) }} icon="microphone-slash" style={{ color: "#ff2222" }} size="3x" />
 						: <FontAwesomeIcon onClick={() => { this.muteVoice(true) }} icon="microphone" style={{ color: "#6DB65B" }} size="3x" />}

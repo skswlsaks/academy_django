@@ -72,6 +72,7 @@ class StudentView extends React.Component {
 			}else if (data.type == 'user_disconnected') {
 				console.log("User " + data['username'] + " disconnected! Received new list of users.")
 				if(data['username'] == this.state.connectedTo){
+					this.handleShowAlert('Teacher: `' + this.state.connectedTo + '` has disconnected!', 'warning');
 					this.disconnect();
 				}
 				this.props.update_online_users(data['users_arr']);
@@ -90,6 +91,18 @@ class StudentView extends React.Component {
 
 		await this.getStream();
 	}
+
+	componentWillUnmount() {
+		console.log("student view unmounting...cleaning up resources");
+		this.cleanUpResources();
+	}
+
+	cleanUpResources(){
+		this.disconnect();
+		this.audioStream = null;
+		this.props.socket.close();
+	}
+
 
 	async getStream() {
 		desktopCapturer.getSources({types: ['window', 'screen']}, async (error, sources) => {
@@ -136,11 +149,19 @@ class StudentView extends React.Component {
 	}
 
 	disconnect(){
-		this.handleShowAlert('Teacher: `' + this.state.connectedTo + '` has disconnected from your screen!', 'warning');
 		this.setState({connectedTo: ''});
+		if (this.peercreation.initialized) {
+			this.remoteAudio = null;
+			this.peercreation.destroy();
+		}
 	}
 
 	initiatePeer(username, initiator){
+		if (this.peercreation.initialized) {
+			this.peercreation.destroy();
+			console.log('Existing peer connection destroyed');
+		}
+
 		var stream = this.localVideo.srcObject;
 		var my_peer = this.peercreation.init(stream, initiator);
 		console.log('Initiated peer: ' + this.props.auth.user.username);
@@ -236,7 +257,7 @@ class StudentView extends React.Component {
 					}
 				</div>
 				<div className="video-wrapper" id="videos">
-					<video id="localVideo"  muted="muted" autoPlay playsInline ref={video => (this.localVideo = video)} />
+					<video id="localVideo"  muted autoPlay playsInline ref={video => (this.localVideo = video)} />
 					<audio id="remoteAudio" autoPlay ref={audio => (this.remoteAudio = audio)}/>
 					<div>
 						{ muted ? <FontAwesomeIcon onClick={()=>{this.muteVoice(false)}} icon="microphone-slash" style={{color:"#ff2222"}} size="3x"/> 
