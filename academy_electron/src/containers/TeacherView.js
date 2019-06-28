@@ -41,7 +41,7 @@ class TeacherView extends React.Component {
 		const room_name = 'room1';
 
 		// Connecting to chatroom
-		const socket = new WebSocket('ws://127.0.0.1:8000/ws/signaling/' + room_name + '/');
+		const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || '192.168.0.3:8000') + '/ws/signaling/' + room_name + '/');
 
 		socket.onopen = (e) => {
 			//send authentication token to server
@@ -199,7 +199,7 @@ class TeacherView extends React.Component {
 			if (e.shiftKey) modifiers.push('shift')
 			if (e.metaKey) modifiers.push('command')
 
-			this.peercreation.peer.send(JSON.stringify({ type: 'key_press', keyCode: event.keyCode, modifiers: modifiers }));
+			this.peercreation.peer.send(JSON.stringify({ type: 'key_press', keyCode: e.keyCode, modifiers: modifiers }));
 		}
 	}
 
