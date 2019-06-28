@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'signaling',  # django app - signaling
     'api',  # django app - api
+    'corsheaders',
     'channels',
     'rest_framework',
     'knox'
