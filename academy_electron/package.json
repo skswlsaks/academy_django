@@ -36,7 +36,7 @@
     "rebuild": "npm rebuild --runtime=electron --target=4.2.0 --disturl=https://atom.io/download/atom-shell --abi=67"
   },
   "build": {
-    "appId": "com.brian.electronprototype",
+    "appId": "com.tonyacademy.webrtc",
     "files": [
       "build/**/*",
       "node_modules/**/*"
