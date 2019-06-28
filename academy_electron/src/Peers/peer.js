@@ -15,9 +15,18 @@ class PeerCreation {
             reconnectTimer: 1000,
             iceTransportPolicy: 'relay',
             config: {
-                iceServer: [{
-                    urls: 'stun:stun.l.google.com:19302'
-                }]
+                iceServer: [
+                    {
+                        "urls": "stun:numb.viagenie.ca",
+                        "username": "tonysacademy@hotmail.com",
+                        "credential": "tonysacademy"
+                    }, 
+                    {
+                        "urls": "turn:numb.viagenie.ca",
+                        "username": "tonysacademy@hotmail.com",
+                        "credential": "tonysacademy"
+                    }
+                ]
             }
         });
         return this.peer;
