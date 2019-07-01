@@ -3,6 +3,7 @@ import { show_alert, hide_alert } from "./alert";
 import { ApiService } from '../ApiService';
 import { authHeader } from '../helpers/authHeader';
 import { parseError } from '../helpers/errorParser';
+import { isConstructorDeclaration } from "typescript";
 
 const apiService = new ApiService();
 
@@ -14,13 +15,6 @@ export const getUser = () => (dispatch, getState) => {
             payload: res.data
         });
     }).catch(err => {
-        if(err.response && err.response.status){
-            const errorMessage = parseError(err.response.data);
-            dispatch(show_alert(errorMessage, 'danger'));
-            setTimeout(() => {
-                dispatch(hide_alert());
-            }, 3000);
-        }
         dispatch({ type: AUTH_ERROR });
     });
 };
@@ -34,8 +28,13 @@ export const login = (username, password) => dispatch => {
         });
     }).catch(err => {
         if(err.response && err.response.status){
-            const errorMessage = parseError(err.response.data);
-            dispatch(show_alert(errorMessage, 'danger'));
+            console.log(err.response);
+            if(err.response.status !== 400){
+                dispatch(show_alert(err.response.statusText, 'danger'));
+            }else{
+                const errorMessage = parseError(err.response.data);
+                dispatch(show_alert(errorMessage, 'danger'));
+            }
             setTimeout(() => {
                 dispatch(hide_alert());
             }, 3000);
@@ -46,21 +45,18 @@ export const login = (username, password) => dispatch => {
 
 export const logout = () => (dispatch, getState) => {
     var socket = getState().peer_manager.socket;
-    socket.send(JSON.stringify({
-        'logout': true
-    }));
+    if(socket.readyState === WebSocket.OPEN){
+        socket.send(JSON.stringify({
+            'logout': true
+        }));
+    }
 
     apiService.logout(authHeader(getState)).then(res => {
         dispatch({ type: LOGOUT_SUCCESS });
         dispatch({ type: RESET_PEER_MANAGER });
     }).catch(err => {
-        if(err.response && err.response.status){
-            const errorMessage = parseError(err.response.data);
-            dispatch(show_alert(errorMessage, 'danger'));
-            setTimeout(() => {
-                dispatch(hide_alert());
-            }, 3000);
-        }
+        dispatch({ type: AUTH_ERROR });
+        console.log(err);
     });
 };
 
@@ -72,8 +68,12 @@ export const register = (formData) => dispatch => {
         });
     }).catch(err => {
         if(err.response && err.response.status){
-            const errorMessage = parseError(err.response.data);
-            dispatch(show_alert(errorMessage, 'danger'));
+            if(err.response.status !== 400){
+                dispatch(show_alert(err.response.statusText, 'danger'));
+            }else{
+                const errorMessage = parseError(err.response.data);
+                dispatch(show_alert(errorMessage, 'danger'));
+            }
             setTimeout(() => {
                 dispatch(hide_alert());
             }, 3000);
