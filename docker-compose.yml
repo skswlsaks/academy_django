@@ -1,4 +1,6 @@
 version : '3'
+volumes:
+  data:
 services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
   db:
     image: mysql:5.7
@@ -18,12 +20,8 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
       - '3306'
     volumes:
       #Where the db data will be persisted
-      - my-db:/var/lib/mysql
-
-  volumes:
-      my-db:
+      - data:/var/lib/mysql
               
-  
   redis:
     image: redis
     ports: 
