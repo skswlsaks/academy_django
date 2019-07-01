@@ -20,7 +20,7 @@ class TeacherView extends React.Component {
 		this.handleMouseClick = this.handleMouseClick.bind(this);
 		this.handleMouseMove = this.handleMouseMove.bind(this);
 		this.handleKeyPress = this.handleKeyPress.bind(this);
-		this.handleMouseMoveThrottled = this.throttled(500, this.handleMouseMove);
+		this.handleMouseMoveThrottled = this.throttled(300, this.handleMouseMove);
 		this.muteVoice = this.muteVoice.bind(this);
 		this.peercreation = new PeerCreation();
 		this.mousePosition = { x: null, y: null };
@@ -101,7 +101,9 @@ class TeacherView extends React.Component {
 		document.removeEventListener("keydown", this.handleKeyPress, false);
 		this.disconnect();
 		this.audioStream = null;
-		this.props.socket.close();
+		if(this.props.socket.readyState === WebSocket.OPEN || this.props.socket.readyState === WebSocket.CONNECTING){
+			this.props.socket.close();
+		}
 	}
 
 	async getAudioSource() {
@@ -135,7 +137,9 @@ class TeacherView extends React.Component {
 			'to_username': username,
 			'from_username': this.props.auth.user.username
 		});
-		this.props.socket.send(msg);
+		if(this.props.socket.readyState === WebSocket.OPEN){
+			this.props.socket.send(msg);
+		}
 	}
 
 	initiatePeer(username, initiator) {
@@ -154,7 +158,9 @@ class TeacherView extends React.Component {
 				'offer': data,
 				'to_username': username
 			});
-			this.props.socket.send(msg);
+			if(this.props.socket.readyState === WebSocket.OPEN){
+				this.props.socket.send(msg);
+			}
 		})
 		my_peer.on('connect', () => {
 			this.setState({ connectedTo: username });

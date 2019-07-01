@@ -100,7 +100,10 @@ class StudentView extends React.Component {
 	cleanUpResources(){
 		this.disconnect();
 		this.audioStream = null;
-		this.props.socket.close();
+		if(this.props.socket.readyState === WebSocket.OPEN || this.props.socket.readyState === WebSocket.CONNECTING){
+			this.props.socket.close();
+		}
+		ipcRenderer.removeAllListeners();
 	}
 
 
@@ -172,7 +175,9 @@ class StudentView extends React.Component {
 				'offer': data,
 				'to_username': username
 			});
-			this.props.socket.send(msg);
+			if(this.props.socket.readyState === WebSocket.OPEN){
+				this.props.socket.send(msg);
+			}
 		})
 		my_peer.on('connect', () => {
 			this.setState({connectedTo: username});
@@ -209,7 +214,9 @@ class StudentView extends React.Component {
 			'to_username': username,
 			'from_username': this.props.auth.user.username
 		});
-		this.props.socket.send(msg);
+		if(this.props.socket.readyState === WebSocket.OPEN){
+			this.props.socket.send(msg);
+		}
 	}
 
 	handleShowAlert(msg, type) {
