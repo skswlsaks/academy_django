@@ -32,6 +32,7 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
     # 로컬 폴더(.)와 docker 의 /app 폴더를 마운트(연결)
     volumes: 
       - .:/app
+      - jenkins_data:/var/jenkins_home
     # docker 와 로컬에서 서로 입력 출력할 포트, 접근할 포트
     expose:
       - "8000"
@@ -45,3 +46,11 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
       - SECRET_KEY='_d+ig#cwuqe07os!x73^@k6d111bykg%f3%=yi$jsql2ab+t39'
       - DB_NAME='db'
 
+  jenkins:
+    build: ./jenkins
+    restart: always
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home

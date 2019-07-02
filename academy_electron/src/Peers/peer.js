@@ -17,14 +17,14 @@ class PeerCreation {
             config: {
                 iceServer: [
                     {
-                        "urls": "stun:numb.viagenie.ca",
-                        "username": "tonysacademy@hotmail.com",
-                        "credential": "tonysacademy"
+                        "urls": "stun:121.167.151.232:3478",
+                        "username": "tonysacademy",
+                        "credential": "yZ4d4eM3Cq"
                     }, 
                     {
-                        "urls": "turn:numb.viagenie.ca",
-                        "username": "tonysacademy@hotmail.com",
-                        "credential": "tonysacademy"
+                        "urls": "turn:121.167.151.232:3478",
+                        "username": "tonysacademy",
+                        "credential": "yZ4d4eM3Cq"
                     }
                 ]
             }
