@@ -1,4 +1,6 @@
 version : '3'
+volumes:
+  data:
 services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
   db:
     image: mysql:5.7
@@ -16,10 +18,14 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
     expose:
       # Opens port 3306 on the container
       - '3306'
-  
-  
+    volumes:
+      #Where the db data will be persisted
+      - data:/var/lib/mysql
+              
   redis:
-    image: redis:latest
+    image: redis
+    ports: 
+      - "6379:6379"
 
 
   django: # 앱 service 이름

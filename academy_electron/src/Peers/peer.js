@@ -16,6 +16,16 @@ class PeerCreation {
             iceTransportPolicy: 'relay',
             config: {
                 iceServer: [
+                    // {
+                    //     "urls": "stun:numb.viagenie.ca",
+                    //     "username": "tonysacademy@hotmail.com",
+                    //     "credential": "tonysacademy"
+                    // }, 
+                    // {
+                    //     "urls": "turn:numb.viagenie.ca",
+                    //     "username": "tonysacademy@hotmail.com",
+                    //     "credential": "tonysacademy"
+                    // }
                     {
                         "urls": "stun:121.167.151.232:3478",
                         "username": "tonysacademy",
