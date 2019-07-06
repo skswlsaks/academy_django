@@ -15,7 +15,7 @@ class PeerCreation {
             reconnectTimer: 1000,
             iceTransportPolicy: 'relay',
             config: {
-                iceServer: [
+                iceServers: [
                     // {
                     //     "urls": "stun:numb.viagenie.ca",
                     //     "username": "tonysacademy@hotmail.com",
