@@ -1,0 +1,10 @@
+.alert-shown {
+    opacity: 1;
+    transition: all 250ms linear;
+}
+  
+.alert-hidden {
+    opacity: 0;
+    height: 0;
+    transition: all 250ms linear;
+}

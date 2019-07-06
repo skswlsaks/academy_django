@@ -1,5 +1,6 @@
 import axios from 'axios';
-const API_URL = 'http://' + (process.env.REACT_APP_API_URL || 'www.tonyscoding.com:8000');
+const API_URL = 'http://' + (process.env.REACT_APP_API_URL || '127.0.0.1:8000');
+//const API_URL = 'http://' + (process.env.REACT_APP_API_URL || 'www.tonyscoding.com:8000');
 
 export class ApiService {
     getUser(authHeader){
