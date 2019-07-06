@@ -6,10 +6,10 @@ from django.core.exceptions import ImproperlyConfigured
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# secret_file = os.path.join(BASE_DIR, 'secrets.json')
+secret_file = os.path.join(BASE_DIR, 'secrets.json')
 
-# with open(secret_file) as f:
-#     secrets = json.loads(f.read())
+with open(secret_file) as f:
+    secrets = json.loads(f.read())
 
 def get_secret(setting, secrets=secrets):
     try:
@@ -23,8 +23,8 @@ def get_secret(setting, secrets=secrets):
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = get_secret("SECRET_KEY")
-SECRET_KEY = "_d+ig#cwuqe07os!x73^@k6d111bykg%f3%=yi$jsql2ab+t39"
+SECRET_KEY = get_secret("SECRET_KEY")
+# SECRET_KEY = "_d+ig#cwuqe07os!x73^@k6d111bykg%f3%=yi$jsql2ab+t39"
 
 
 # SECURITY WARNING: don't run with debug turned on in production!

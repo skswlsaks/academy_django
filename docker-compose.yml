@@ -1,20 +1,20 @@
 version : '3'
 
 services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
-  # nginx:
-  #   image: nginx:latest
-  #   container_name: nginx
-  #   ports:
-  #     - "80:80"
-  #     - "443:443" # 나중에 https 등록하면 이 포트 사용함
-  #   volumes:
-  #     - app_data:/app
-  #     - ./config/nginx:/etc/nginx/conf.d
-  #     - static_volume:/app/academy_backend/static
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443" # 나중에 https 등록하면 이 포트 사용함
+    volumes:
+      - app_data:/app
+      - ./config/nginx:/etc/nginx/conf.d
+      - static_volume:/app/academy_backend/static
 
-  #   depends_on:
-  #     - django
-  #     - channel
+    depends_on:
+      - wsgiserver
+      - asgiserver
 
   db:
     image: mysql:5.7
@@ -77,18 +77,18 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
   #   links:
   #     - redis
   
-  # asgiserver:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   command: daphne -b 0.0.0.0 -p 8001 academy_backend.asgi:channel_layer
-  #   ports:
-  #     - "8001:8001"
-  #   links:
-  #     - db
-  #     - redis
-  #   environment:
-  #     - DB_NAME='db'
+  asgiserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: daphne -b 0.0.0.0 -p 8001 academy_backend.asgi:channel_layer
+    ports:
+      - "8001:8001"
+    links:
+      - db
+      - redis
+    environment:
+      - DB_NAME='db'
   
 volumes:
   app_data:
