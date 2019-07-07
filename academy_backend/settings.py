@@ -104,7 +104,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'academy_backend.wsgi.application'
-
+ASGI_APPLICATION = 'academy_backend.routing.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
@@ -163,7 +163,6 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
 )
 
-ASGI_APPLICATION = 'academy_backend.routing.application'
 
 CHANNEL_LAYERS = {
     'default': {
