@@ -11,6 +11,8 @@ import * as peer_actions from '../../../redux/actions/peers';
 import { get_user_media } from '../../../helpers/mediaDevices';
 import { showToast } from '../../../helpers/toast';
 
+import API_URL from '../../../config';
+
 class Index extends React.Component {
     constructor(props) {
 		super(props);
@@ -33,7 +35,8 @@ class Index extends React.Component {
 		}
 
         this.state = {
-            connectedTo: '',
+			connectedTo: '',
+			connectingTo: '',
             muted: false,
             deaf: false
         };
@@ -45,10 +48,10 @@ class Index extends React.Component {
 		// var room = prompt("Enter room name:");
 		const username = this.props.auth.user.username;
 		const token = this.props.auth.token;
-		const room_name = 'room1';
+		const room_name = this.props.auth.user.profile.classroom;
 
 		// Connecting to chatroom
-		const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || 'www.tonyscoding.com:8000') + '/ws/signaling/' + room_name + '/');
+		const socket = new WebSocket('ws://' + API_URL + '/ws/signaling/' + room_name + '/');
 		// const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || '127.0.0.1:8000') + '/ws/signaling/' + room_name + '/');
 		socket.onopen = (e) => {
 			//send authentication token to server
@@ -79,16 +82,12 @@ class Index extends React.Component {
 				this.props.update_online_users(data['users_arr']);
 			} else if (data.type == 'user_disconnected') {
 				console.log("User " + data['username'] + " disconnected! Received new list of users.")
+				//close stream and destroy peer connection since connected peer has disconnected
 				if (data['username'] == this.state.connectedTo) {
 					this.handleShowAlert('Student: `' + this.state.connectedTo + '` has disconnected!', 'warning');
 					this.disconnect();
 				}
 				this.props.update_online_users(data['users_arr']);
-				//close stream and destroy peer connection
-				//ONLY IF disconnected_user.username == current auth.user->remotePeer.username
-				//this.remoteVideo.srcObject = null;
-				//this.signaling.peercreation.destroy();
-
 			}
 		}
 		socket.onclose = function (e) {
@@ -142,6 +141,7 @@ class Index extends React.Component {
 	}
 
 	callUser = (username) => {
+		this.setState({ connectingTo: username });
 		this.initiatePeer(username, true);
 
 		console.log('Websocket: send init_peer to ' + username);
@@ -176,7 +176,7 @@ class Index extends React.Component {
 			}
 		})
 		my_peer.on('connect', () => {
-			this.setState({ connectedTo: username });
+			this.setState({ connectedTo: username, connectingTo: '' });
 			console.log('PEER CONNECTION SUCCESS!');
 		})
 		my_peer.on('close', () => {
@@ -269,7 +269,7 @@ class Index extends React.Component {
 
     render() {
         const { online_users } = this.props;
-        const { muted, deaf, connectedTo } = this.state;
+        const { muted, deaf, connectedTo, connectingTo } = this.state;
 
         return (
             <Container fluid className="p-0">
@@ -278,6 +278,7 @@ class Index extends React.Component {
                         <StudentList online_users={online_users} 
 									 callUser={this.callUser} 
 									 connectedTo={connectedTo} 
+									 connectingTo={connectingTo} 
 									 currentUsername={this.props.auth.user.username} 
 						/>
                     </Col>

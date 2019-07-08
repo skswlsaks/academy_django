@@ -13,6 +13,8 @@ import { showToast } from '../../../helpers/toast';
 
 import doc from '../../../test.pdf';
 
+import API_URL from '../../../config';
+
 const electron = window.require('electron');
 const desktopCapturer = electron.desktopCapturer;
 const ipcRenderer = electron.ipcRenderer;
@@ -28,7 +30,8 @@ class Index extends React.Component {
 		this.screenHeight = 1;
 
         this.state = {
-            connectedTo: '',
+			connectedTo: '',
+			connectingTo: '',
             muted: false,
             deaf: false
         };
@@ -38,10 +41,10 @@ class Index extends React.Component {
 		// var room = prompt("Enter room name:");
 		const username = this.props.auth.user.username;
 		const token = this.props.auth.token;
-		const room_name = 'room1';
+		const room_name = this.props.auth.user.profile.classroom;
 
 		// Connecting to chatroom
-		const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || 'www.tonyscoding.com:8000') + '/ws/signaling/' + room_name + '/');
+		const socket = new WebSocket('ws://' + API_URL + '/ws/signaling/' + room_name + '/');
 		// const socket = new WebSocket('ws://' + (process.env.REACT_APP_API_URL || '127.0.0.1:8000') + '/ws/signaling/' + room_name + '/');
 
 		socket.onopen = (e) => {
@@ -63,19 +66,16 @@ class Index extends React.Component {
 				}
 			} else if (data.type == 'user_connected') {
 				console.log("User " + data['username'] + " connected! Received new list of users.");
+				console.log(data['users_arr']);
 				this.props.update_online_users(data['users_arr']);
 			} else if (data.type == 'user_disconnected') {
 				console.log("User " + data['username'] + " disconnected! Received new list of users.")
+				//close stream and destroy peer connection since connected peer has disconnected
 				if (data['username'] == this.state.connectedTo) {
 					this.handleShowAlert('Teacher: `' + this.state.connectedTo + '` has disconnected!', 'warning');
 					this.disconnect();
 				}
 				this.props.update_online_users(data['users_arr']);
-				//close stream and destroy peer connection
-				//ONLY IF disconnected_user.username == current auth.user->remotePeer.username
-				//this.remoteVideo.srcObject = null;
-				//this.signaling.peercreation.destroy();
-
 			}
 		}
 		socket.onclose = function (e) {
@@ -159,6 +159,8 @@ class Index extends React.Component {
 	}
 
 	initiatePeer(username, initiator) {
+		this.setState({ connectingTo: username });
+
 		if (this.peercreation.initialized) {
 			this.peercreation.destroy();
 			console.log('Existing peer connection destroyed');
@@ -179,7 +181,7 @@ class Index extends React.Component {
 			}
 		})
 		my_peer.on('connect', () => {
-			this.setState({ connectedTo: username });
+			this.setState({ connectedTo: username, connectingTo: '' });
 			this.handleShowAlert('Teacher: `' + username + '` has connected to your screen!', 'primary');
 			console.log('PEER CONNECTION SUCCESS!')
 		})
@@ -241,7 +243,7 @@ class Index extends React.Component {
 
     render() {
         const { online_users } = this.props;
-        const { muted, deaf, connectedTo } = this.state;
+        const { muted, deaf, connectedTo, connectingTo } = this.state;
 
         return (
             <Container fluid className="p-0">
@@ -249,7 +251,8 @@ class Index extends React.Component {
                     <Col lg="4" className="d-flex">
                         <TeacherList online_users={online_users} muted={muted} deaf={deaf}
 									 notifyTeacher={this.notifyTeacher}
-									 connectedTo={connectedTo} 
+									 connectedTo={connectedTo}  
+									 connectingTo={connectingTo} 
 									 currentUsername={this.props.auth.user.username} 
 									 muteVoice={this.muteVoice} muteSound={this.muteSound} />
                     </Col>

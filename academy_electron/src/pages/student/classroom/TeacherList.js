@@ -20,14 +20,20 @@ import { countOnlineUsers } from "../../../helpers/countOnlineUsers";
 
 class TeacherList extends React.Component {
     render() {
-        const { online_users, currentUsername, connectedTo, notifyTeacher, deaf, muted, muteSound, muteVoice } = this.props;
+        const { online_users, currentUsername, connectedTo, connectingTo, notifyTeacher, deaf, muted, muteSound, muteVoice } = this.props;
         const count = countOnlineUsers(online_users, true);
         const users_list = (
             <div>
                 {
                     Object.keys(online_users).map((username, index) => {
-                        if (username != currentUsername && online_users[username] == true) {
-                            return (connectedTo == username) ? (
+                        if (username != currentUsername && online_users[username].isTeacher == true) {
+                            let status_badge = null;
+                            if (connectingTo==username){
+                                status_badge = <Badge color="warning" className="float-right">연결중</Badge>
+                            }else if(connectedTo==username){
+                                status_badge = <Badge color="info" className="float-right">연결됨</Badge>
+                            }
+                            return (
                                 <div key={index}>
                                     <Media>
                                         <img
@@ -39,30 +45,11 @@ class TeacherList extends React.Component {
                                             onClick={()=>{notifyTeacher(username)}}
                                         />
                                         <Media body>
-                                            <Badge color="info" className="float-right">연결됨</Badge>
-                                            <strong>{username}</strong>
+                                            {status_badge}
+                                            <strong>{online_users[username].first_name + ' ' + online_users[username].last_name}</strong>
                                             <br />
                                             <small className="text-muted">Some teacher info</small>
                                             <br />
-                                        </Media>
-                                    </Media>
-                                    <hr />
-                                </div>
-                            ) : (
-                                <div key={index}>
-                                    <Media>
-                                        <img
-                                            src={avatar1}
-                                            width="84"
-                                            height="84"
-                                            className="rounded-circle mr-2"
-                                            alt={username} 
-                                            onClick={()=>{notifyTeacher(username)}}
-                                        />
-                                        <Media body>
-                                            <strong>{username}</strong>
-                                            <br />
-                                            <small className="text-muted">Some teacher info</small>
                                         </Media>
                                     </Media>
                                     <hr />

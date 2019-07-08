@@ -4,7 +4,7 @@ export const countOnlineUsers = (online_users, isTeacher) => {
         return 0
     }else{
         let res = arr.filter(username => {
-            return online_users[username] == isTeacher;
+            return online_users[username].isTeacher == isTeacher;
         })
         return res.length
     }

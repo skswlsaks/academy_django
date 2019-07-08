@@ -260,7 +260,7 @@ class NavbarComponent extends React.Component {
                                     className="avatar img-fluid rounded-circle mr-1"
                                     alt="Chris Wood"
                                 />
-                                <span className="text-dark">{user ? user.username : ''}</span>
+                                <span className="text-dark">{user ? (user.first_name + ' ' + user.last_name) : ''}</span>
                             </DropdownToggle>
                         </span>
                         <DropdownMenu right>
