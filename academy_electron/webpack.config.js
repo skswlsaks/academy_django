@@ -11,6 +11,7 @@ module.exports = {
     output: {
         path: path.resolve(__dirname, 'dist/js'),
         filename: 'bundle.[hash].js',
+        globalObject: 'this',
         publicPath: '/'
     },
     module: {
@@ -30,6 +31,15 @@ module.exports = {
         {
           test: /\.node$/,
           use: 'node-loader'
+        },
+        {
+          test: /\.(png|jpe?g|gif|svg|pdf)$/,
+          use: [
+            {
+              loader: 'file-loader',
+              options: {},
+            },
+          ],
         }
       ]
     },
