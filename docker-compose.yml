@@ -9,7 +9,7 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
       - "443:443" # 나중에 https 등록하면 이 포트 사용함
     volumes:
       - app_data:/app
-      - ./config/nginx:/etc/nginx/conf.d
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
       - static_volume:/app/academy_backend/static
 
     depends_on:
