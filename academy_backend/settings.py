@@ -24,6 +24,7 @@ def get_secret(setting, secrets=secrets):
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_secret("SECRET_KEY")
+# SECRET_KEY = "_d+ig#cwuqe07os!x73^@k6d111bykg%f3%=yi$jsql2ab+t39"
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -103,7 +104,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'academy_backend.wsgi.application'
-
+ASGI_APPLICATION = 'academy_backend.routing.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
@@ -162,7 +163,6 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
 )
 
-ASGI_APPLICATION = 'academy_backend.routing.application'
 
 CHANNEL_LAYERS = {
     'default': {
