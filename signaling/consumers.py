@@ -21,30 +21,33 @@ class SignalConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        # Remove user from peer_connections if exists
-        try:
-            await database_sync_to_async(Room.objects.get(user=self.user).delete())()
-        except Exception:
-            pass
+        # check user is authenticated
+        if hasattr(self, 'user') and hasattr(self.user, 'id') and not self.user.is_anonymous:
+            # Remove user from peer_connections if exists
+            try:
+                await database_sync_to_async(Room.objects.get(user=self.user).delete())()
+            except Exception:
+                pass
 
-        users_arr = await self.get_room_users_arr()
-        full_context = {
-            'type': 'user_disconnected',
-            'username': self.user.username,
-            'users_arr': users_arr
-        }
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            full_context
-        )
+            users_arr = await self.get_room_users_arr()
+            full_context = {
+                'type': 'user_disconnected',
+                'username': self.user.username,
+                'users_arr': users_arr
+            }
+            # Send message to room group
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                full_context
+            )
 
-        # Remove user from room group
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
-
+            # Remove user from room group
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+            )
+        pass
+    
     async def get_room_users_arr(self):
         room_users = await database_sync_to_async(Room.objects.filter)(room_name=self.room_name)
         users_arr = {}
