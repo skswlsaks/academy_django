@@ -92,6 +92,36 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
       - redis
     environment:
       - DB_NAME='db'
+      
+  asgiserver2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: daphne -b 0.0.0.0 -p 8002 academy_backend.asgi:application
+   #volumes:
+   #  - app_data:/app
+    ports:
+      - "8002:8002"
+    links:
+      - db
+      - redis
+    environment:
+      - DB_NAME='db'
+  
+  asgiserver3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: daphne -b 0.0.0.0 -p 8003 academy_backend.asgi:application
+   #volumes:
+   #  - app_data:/app
+    ports:
+      - "8003:8003"
+    links:
+      - db
+      - redis
+    environment:
+      - DB_NAME='db'
   
 volumes:
   app_data:
