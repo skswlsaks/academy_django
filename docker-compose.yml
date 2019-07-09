@@ -2,7 +2,7 @@ version : '3'
 
 services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
   nginx:
-    image: nginx:latest
+    image: nginx:1.14.2
     container_name: nginx
     ports:
       - "80:80"
