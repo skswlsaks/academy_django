@@ -4,26 +4,13 @@ import store from "./store";
 import { Provider } from 'react-redux';
 import * as serviceWorker from './serviceWorker';
 
-import './bootstrap.css';
-import './App.css';
+import './assets/css/Theme.css';
 
-import PrivateRoute from './containers/PrivateRoute';
+import { getUser } from "./redux/actions/auth";
+import { AUTH_ERROR } from "./redux/actions/types";
 
-import TeacherView from './containers/TeacherView';
-import StudentView from './containers/StudentView';
-import LoginView from './containers/LoginView';
-import RegisterView from './containers/RegisterView';
-import MyNavbar from './components/MyNavbar';
-
-import { getUser } from "./actions/auth";
-import { AUTH_ERROR } from "./actions/types";
-
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
-
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { faMicrophone, faMicrophoneSlash } from '@fortawesome/free-solid-svg-icons'
-
-library.add(faMicrophone, faMicrophoneSlash)
+import ReduxToastr from "react-redux-toastr";
+import Routes from "./routes/Routes";
 
 class App extends Component {
     componentDidMount() {
@@ -37,17 +24,16 @@ class App extends Component {
     render() {
         return (
             <Provider store={store}>
-                <BrowserRouter>
-                    <div className="App">
-                        <MyNavbar />
-                        <Switch>
-                            <PrivateRoute exact path="/" teacherOnly={true} component={TeacherView} />
-                            <PrivateRoute exact path="/student" component={StudentView} />
-                            <Route exact path="/login" component={LoginView} />
-                            <Route exact path="/register" component={RegisterView} />
-                        </Switch>
-                    </div>
-                </BrowserRouter>
+                <Routes />
+                <ReduxToastr
+                timeOut={5000}
+                newestOnTop={true}
+                position="top-right"
+                transitionIn="fadeIn"
+                transitionOut="fadeOut"
+                progressBar
+                closeOnToastrClick
+                />
             </Provider>
         );
     }

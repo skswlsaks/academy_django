@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('classroom','isTeacher')#, 'dob')
+        fields = ('classroom','isTeacher')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -45,7 +45,7 @@ class AuthUserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'profile')
+        fields = ('id', 'username', 'first_name', 'last_name', 'profile')
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()

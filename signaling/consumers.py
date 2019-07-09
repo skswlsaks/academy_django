@@ -49,7 +49,11 @@ class SignalConsumer(AsyncWebsocketConsumer):
         room_users = await database_sync_to_async(Room.objects.filter)(room_name=self.room_name)
         users_arr = {}
         for room_user in room_users:
-            users_arr[room_user.user.username] = room_user.user.profile.isTeacher
+            users_arr[room_user.user.username] = {
+                'first_name': room_user.user.first_name,
+                'last_name': room_user.user.last_name,
+                'isTeacher': room_user.user.profile.isTeacher
+            }
         return users_arr
 
     # Receive message from WebSocket
@@ -62,6 +66,7 @@ class SignalConsumer(AsyncWebsocketConsumer):
             print('Server receive from websocket: access_token')
             try:
                 knoxAuth = TokenAuthentication();
+                # "hacky" way of authenticating user with knox token manually by explicitly calling authenticate_credentials
                 user, auth_token = knoxAuth.authenticate_credentials(text_data_json['access_token'].encode(HTTP_HEADER_ENCODING))
                 self.user = self.scope['user'] = user
 
