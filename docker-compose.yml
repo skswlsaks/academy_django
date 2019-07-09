@@ -1,5 +1,21 @@
 version : '3'
+
 services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443" # 나중에 https 등록하면 이 포트 사용함
+    volumes:
+      - app_data:/app
+      - ./config/nginx:/etc/nginx/conf.d
+      - static_volume:/app/academy_backend/static
+
+    depends_on:
+      - wsgiserver
+      - asgiserver
+
   db:
     image: mysql:5.7
     environment:
@@ -16,32 +32,70 @@ services: # docker-compose 에서 컨테이너(service) 단위를 묶음o
     expose:
       # Opens port 3306 on the container
       - '3306'
-  
-  
+    volumes:
+      #Where the db data will be persisted
+      - db_data:/var/lib/mysql
+
+              
   redis:
-    image: redis:latest
+    image: redis
+    ports:
+      - "6379:6379"
 
 
-  django: # 앱 service 이름
-    build: 
+  wsgiserver: # 앱 service 이름
+    build:
       context: .
       dockerfile: Dockerfile
-   
+
     # docker-compose up 을 command 창에 입력하면 실행할 명령어
-    command: python manage.py runserver 0.0.0.0:8000 
+    command: gunicorn academy_backend.wsgi:application --bind 0.0.0.0:8000
+    # command: python manage.py runserver 0.0.0.0:8000
+    # command: daphne -b 0.0.0.0 -p 8000 academy_backend.asgi:application
     # 로컬 폴더(.)와 docker 의 /app 폴더를 마운트(연결)
-    volumes: 
-      - .:/app
+    volumes:
+     #- app_data:/app
+      - static_volume:/app/academy_backend/static
     # docker 와 로컬에서 서로 입력 출력할 포트, 접근할 포트
     expose:
       - "8000"
-    ports: 
+    ports:
       - "8000:8000"
-    # docker 내에서 필요한 환경변수 설정
-    depends_on:
-      - redis 
+    
+    links:
       - db
-    environment: 
-      - SECRET_KEY='_d+ig#cwuqe07os!x73^@k6d111bykg%f3%=yi$jsql2ab+t39'
+      - redis 
+    environment:
       - DB_NAME='db'
 
+    
+  
+ # worker_channels:
+ #   build: ./
+ #   command: python manage.py runworker
+  #   volumes:
+  #     - ./academy_backend:/academy_backend
+  #   links:
+  #    - redis
+  
+  asgiserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: daphne -b 0.0.0.0 -p 8001 academy_backend.asgi:application
+   #volumes:
+   #  - app_data:/app
+    ports:
+      - "8001:8001"
+    links:
+      - db
+      - redis
+    environment:
+      - DB_NAME='db'
+  
+volumes:
+  app_data:
+  db_data:
+  static_volume:
+
+                  
