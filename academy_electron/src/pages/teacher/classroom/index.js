@@ -3,6 +3,7 @@ import { Container, Row, Col } from "reactstrap";
 
 import Screen from "./Screen";
 import StudentList from "./StudentList";
+import Tasks from './Tasks';
 
 import 'webrtc-adapter';
 import { connect } from 'react-redux';
@@ -289,6 +290,11 @@ class Index extends React.Component {
 								handleMouseMoveThrottled={this.handleMouseMoveThrottled} />
                     </Col>
                 </Row>
+				<Row>
+					<Col lg="12" className="d-flex">
+						<Tasks />
+					</Col>
+				</Row>
             </Container>
         );
     }

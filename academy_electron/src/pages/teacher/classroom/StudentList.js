@@ -67,7 +67,6 @@ class StudentList extends React.Component {
                     {
                         (count > 0) ? users_list : <div><p>No online students</p><hr /></div>
                     }
-                    <Button color="success" block>Send Task</Button>
                 </CardBody>
             </Card>
         );

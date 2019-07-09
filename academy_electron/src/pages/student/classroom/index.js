@@ -11,9 +11,9 @@ import * as peer_actions from '../../../redux/actions/peers';
 import { get_user_media } from '../../../helpers/mediaDevices';
 import { showToast } from '../../../helpers/toast';
 
-import doc from '../../../test.pdf';
-
 import API_URL from '../../../config';
+
+import docs from '../../../documents/docs';
 
 const electron = window.require('electron');
 const desktopCapturer = electron.desktopCapturer;
@@ -30,6 +30,7 @@ class Index extends React.Component {
 		this.screenHeight = 1;
 
         this.state = {
+			task: 'scratch_lv4_inheritence',
 			connectedTo: '',
 			connectingTo: '',
             muted: false,
@@ -243,7 +244,7 @@ class Index extends React.Component {
 
     render() {
         const { online_users } = this.props;
-        const { muted, deaf, connectedTo, connectingTo } = this.state;
+        const { muted, deaf, connectedTo, connectingTo, task } = this.state;
 
         return (
             <Container fluid className="p-0">
@@ -261,7 +262,7 @@ class Index extends React.Component {
 						ref={video => (this.localVideo = video)} />
 						<audio id="remoteAudio" autoPlay muted={deaf} ref={audio => (this.remoteAudio = audio)} />
 
-                        <Document doc={doc} />
+                        <Document doc={docs[task]} />
                     </Col>
                 </Row>
             </Container>
