@@ -21,37 +21,41 @@ class SignalConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        # Remove user from peer_connections if exists
-        try:
-            await database_sync_to_async(Room.objects.get(user=self.user).delete())()
-        except Exception:
-            pass
+        # check user is authenticated
+        if hasattr(self, 'user') and hasattr(self.user, 'id') and not self.user.is_anonymous:
+            # Remove user from peer_connections if exists
+            try:
+                await database_sync_to_async(Room.objects.get(user=self.user).delete())()
+            except Exception:
+                pass
 
-        users_arr = await self.get_room_users_arr()
-        full_context = {
-            'type': 'user_disconnected',
-            'username': self.user.username,
-            'users_arr': users_arr
-        }
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            full_context
-        )
+            users_arr = await self.get_room_users_arr()
+            full_context = {
+                'type': 'user_disconnected',
+                'username': self.user.username,
+                'users_arr': users_arr
+            }
+            # Send message to room group
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                full_context
+            )
 
-        # Remove user from room group
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+            # Remove user from room group
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+            )
+        pass
 
     async def get_room_users_arr(self):
         room_users = await database_sync_to_async(Room.objects.filter)(room_name=self.room_name)
         users_arr = {}
         for room_user in room_users:
             users_arr[room_user.user.username] = {
-                'first_name': room_user.user.first_name,
-                'last_name': room_user.user.last_name,
+                'id': room_user.user.id,
+                'name': room_user.user.first_name,
+                'email': room_user.user.email,
                 'isTeacher': room_user.user.profile.isTeacher
             }
         return users_arr
@@ -128,6 +132,16 @@ class SignalConsumer(AsyncWebsocketConsumer):
                 'to_username': text_data_json['to_username'],
                 'from_username': text_data_json['from_username']
             }
+
+        elif 'textbook' in keys:
+            print("Server receive from websocket: textbook")
+            full_context = {
+                'type': 'textbook',
+                'to_username': text_data_json['to_username'],
+                'from_username': text_data_json['from_username'],
+                'textbook': text_data_json['textbook']
+            }
+
         elif 'logout' in keys:
             print("Server receive from websocket: logout")
             await self.close()
@@ -151,6 +165,14 @@ class SignalConsumer(AsyncWebsocketConsumer):
             'type': 'offer',
             'to_username': event['to_username'],
             'peer_data': event['peer_data']
+        }))
+
+    async def textbook(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'textbook',
+            'textbook': event['textbook'],
+            'to_username': event['to_username'],
+            'from_username': event['from_username']
         }))
 
     async def notify(self, event):

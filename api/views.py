@@ -1,13 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
-from rest_framework import viewsets, generics
+from rest_framework import viewsets, generics, status
 from knox.models import AuthToken
-from .models import User
-from .serializers import UserSerializer, LoginSerializer, AuthUserSerializer
-from .permissions import IsLoggedInUserOrAdmin, IsAdminUser
-
+from .models import User, Stage, Language, FileUpload, Textbook, Checkpoint
+from .serializers import UserSerializer, LoginSerializer, AuthUserSerializer, StageSerializer, LanguageSerializer, FileUploadSerializer, TextbookSerializer, CheckpointSerializer
+from .permissions import IsLoggedInUserOrAdmin, IsAdminUser, IsTeacher
+from rest_framework.parsers import FileUploadParser
 
 class AcademyApiView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -15,6 +14,40 @@ class AcademyApiView(APIView):
     def get(self, request):
         content = {'message': 'Hello, World!'}
         return Response(content)
+        
+class StageViewSet(viewsets.ModelViewSet):
+    queryset = Stage.objects.all()
+    serializer_class = StageSerializer
+
+class LanguageViewSet(viewsets.ModelViewSet):
+    queryset = Language.objects.all()
+    serializer_class = LanguageSerializer
+
+class FileUploadListView(APIView):
+    parser_class = (FileUploadParser,)
+
+    def put(self, request, *args, **kwargs):
+      serializer = FileUploadSerializer(data=request.data)
+
+      if serializer.is_valid():
+          serializer.save()
+          return Response(serializer.data, status=status.HTTP_201_CREATED)
+      else:
+          return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class FileUploadDetailView(APIView):
+    def delete(self, request, pk, format=None):
+        file = FileUpload.objects.get(pk=pk)
+        file.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class TextbookViewSet(viewsets.ModelViewSet):
+    queryset = Textbook.objects.all().order_by('id')
+    serializer_class = TextbookSerializer
+
+class CheckpointViewSet(viewsets.ModelViewSet):
+    queryset = Checkpoint.objects.all()
+    serializer_class = CheckpointSerializer
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
